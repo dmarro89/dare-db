@@ -1,6 +1,6 @@
 module github.com/dmarro89/dare-db
 
-go 1.21.6
+go 1.22.3
 
 require (
 	github.com/dmarro89/go-redis-hashtable v0.0.3
