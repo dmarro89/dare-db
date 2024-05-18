@@ -27,14 +27,14 @@ This command will start the database as a Docker container in detached mode, exp
 
 The in-memory database provides three simple HTTP endpoints to interact with stored data:
 
-### GET /get
+### GET /get/{key}
 
 This endpoint retrieves an item from the hashtable using a specific key.
 
 Example usage with cURL:
 
 ```bash
-curl -X GET http://localhost:2605/get?key=myKey
+curl -X GET http://localhost:2605/get/myKey
 ```
 
 ### SET /set
@@ -47,14 +47,14 @@ Example usage with cURL:
 curl -X POST -d '{"myKey":"myValue"}' http://localhost:2605/set
 ```
 
-### DELETE /delete
+### DELETE /delete/{key}
 
 This endpoint deletes an item from the hashtable using a specific key.
 
 Example usage with cURL:
 
 ```bash
-curl -X DELETE http://localhost:2605/delete?key=myKey
+curl -X DELETE http://localhost:2605/delete/myKey
 ```
 
 
@@ -80,7 +80,7 @@ func main() {
     }
 
     // Example of retrieving an item
-    resp, err := http.Get("http://localhost:2605/get?key=myKey")
+    resp, err := http.Get("http://localhost:2605/get/myKey")
     if err != nil {
         fmt.Println("Error while retrieving item:", err)
         return
@@ -88,7 +88,7 @@ func main() {
     defer resp.Body.Close()
 
     // Example of deleting an item
-    req, err := http.NewRequest("DELETE", "http://localhost:2605/delete?key=myKey", nil)
+    req, err := http.NewRequest("DELETE", "http://localhost:2605/delete/myKey", nil)
     if err != nil {
         fmt.Println("Error while deleting item:", err)
         return

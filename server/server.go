@@ -21,9 +21,14 @@ func NewServer(db *database.Database) *Server {
 }
 
 func (srv *Server) HandlerGet(w http.ResponseWriter, r *http.Request) {
-	key := r.URL.Query().Get(KEY_PARAM)
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	key := r.PathValue(KEY_PARAM)
 	if key == "" {
-		http.Error(w, `url param query "key" cannot be empty`, http.StatusBadRequest)
+		http.Error(w, `url path param "key" cannot be empty`, http.StatusBadRequest)
 		return
 	}
 
@@ -75,9 +80,9 @@ func (srv *Server) HandlerDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key := r.URL.Query().Get(KEY_PARAM)
+	key := r.PathValue(KEY_PARAM)
 	if key == "" {
-		http.Error(w, `url param query "key" cannot be empty`, http.StatusBadRequest)
+		http.Error(w, `url path param "key" cannot be empty`, http.StatusBadRequest)
 		return
 	}
 

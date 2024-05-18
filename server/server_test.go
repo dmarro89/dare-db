@@ -39,12 +39,14 @@ func TestServer_SetAndGet(t *testing.T) {
 	srv.HandlerGet(getEmptyResponse, getEmptyRequest)
 	assert.Equal(t, http.StatusBadRequest, getEmptyResponse.Code, `url param query "key" cannot be empty`)
 
-	getMissingKeyRequest, _ := http.NewRequest("GET", "/get?key=missingKey", nil)
+	getMissingKeyRequest, _ := http.NewRequest("GET", "/get/missingKey", nil)
+	getMissingKeyRequest.SetPathValue("key", "missingKey")
 	getMissingKeyResponse := httptest.NewRecorder()
 	srv.HandlerGet(getMissingKeyResponse, getMissingKeyRequest)
 	assert.Equal(t, http.StatusNotFound, getMissingKeyResponse.Code, `Key "%s" not found`, "missingKey")
 
-	getRequest, _ := http.NewRequest("GET", "/get?key=testKey", nil)
+	getRequest, _ := http.NewRequest("GET", "/get/testKey", nil)
+	getRequest.SetPathValue("key", "testKey")
 	getResponse := httptest.NewRecorder()
 
 	srv.HandlerGet(getResponse, getRequest)
@@ -84,7 +86,8 @@ func TestServer_SetAndDelete(t *testing.T) {
 	srv.HandlerDelete(deleteEmptyResponse, deleteEmptyRequest)
 	assert.Equal(t, http.StatusBadRequest, deleteEmptyResponse.Code, `url param query "key" cannot be empty`)
 
-	deleteRequest, _ := http.NewRequest("DELETE", "/delete?key=testKey", nil)
+	deleteRequest, _ := http.NewRequest("DELETE", "/delete/testKey", nil)
+	deleteRequest.SetPathValue("key", "testKey")
 	deleteResponse := httptest.NewRecorder()
 
 	srv.HandlerDelete(deleteResponse, deleteRequest)
@@ -93,7 +96,8 @@ func TestServer_SetAndDelete(t *testing.T) {
 		t.Errorf("Expected status %d, got %d", http.StatusNoContent, deleteResponse.Code)
 	}
 
-	getRequest, _ := http.NewRequest("GET", "/get?key=testKey", nil)
+	getRequest, _ := http.NewRequest("GET", "/get/testKey", nil)
+	getRequest.SetPathValue("key", "testKey")
 	getResponse := httptest.NewRecorder()
 
 	srv.HandlerGet(getResponse, getRequest)

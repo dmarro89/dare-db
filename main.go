@@ -12,9 +12,11 @@ import (
 func main() {
 	srv := server.NewServer((database.NewDatabase()))
 
-	http.HandleFunc("/get", srv.HandlerGet)
-	http.HandleFunc("/set", srv.HandlerSet)
-	http.HandleFunc("/delete", srv.HandlerDelete)
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /get/{key}/", srv.HandlerGet)
+	mux.HandleFunc("POST /set", srv.HandlerSet)
+	mux.HandleFunc("DELETE /delete/{key}/", srv.HandlerDelete)
 
 	port := getEnvOrDefault("DARE_PORT", 2605)
 
