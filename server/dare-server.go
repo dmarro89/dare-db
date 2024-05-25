@@ -10,8 +10,11 @@ import (
 
 const KEY_PARAM = "key"
 
-type IDareServer interface {
+type IDare interface {
 	CreateMux() *http.ServeMux
+	HandlerGetById(w http.ResponseWriter, r *http.Request)
+	HandlerSet(w http.ResponseWriter, r *http.Request)
+	HandlerDelete(w http.ResponseWriter, r *http.Request)
 }
 
 type DareServer struct {

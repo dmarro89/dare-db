@@ -9,11 +9,11 @@ import (
 
 func TestNewConfiguration(t *testing.T) {
 	// Set environment variables
-	os.Setenv("DARE_PORT", "8080")
-	os.Setenv("DARE_HOST", "localhost")
-	os.Setenv("TLS_ENABLED", "true")
-	os.Setenv("TLS_CERT_FILE", "/path/to/cert")
-	os.Setenv("TLS_KEY_FILE", "/path/to/key")
+	os.Setenv(DARE_PORT, "8080")
+	os.Setenv(DARE_HOST, "localhost")
+	os.Setenv(DARE_TLS_ENABLED, "true")
+	os.Setenv(DARE_TLS_CERT_FILE, "/path/to/cert")
+	os.Setenv(DARE_TLS_KEY_FILE, "/path/to/key")
 
 	// Create a new configuration
 	config := NewConfiguration()
@@ -26,20 +26,20 @@ func TestNewConfiguration(t *testing.T) {
 	assert.Equal(t, "/path/to/key", config.TLSKeyFile, "TLSKeyFile should be '/path/to/key'")
 
 	// Cleanup environment variables
-	os.Unsetenv("DARE_PORT")
-	os.Unsetenv("DARE_HOST")
-	os.Unsetenv("TLS_ENABLED")
-	os.Unsetenv("TLS_CERT_FILE")
-	os.Unsetenv("TLS_KEY_FILE")
+	os.Unsetenv(DARE_PORT)
+	os.Unsetenv(DARE_HOST)
+	os.Unsetenv(DARE_TLS_ENABLED)
+	os.Unsetenv(DARE_TLS_CERT_FILE)
+	os.Unsetenv(DARE_TLS_KEY_FILE)
 }
 
 func TestNewConfigurationDefaults(t *testing.T) {
 	// Ensure environment variables are not set
-	os.Unsetenv("DARE_PORT")
-	os.Unsetenv("DARE_HOST")
-	os.Unsetenv("TLS_ENABLED")
-	os.Unsetenv("TLS_CERT_FILE")
-	os.Unsetenv("TLS_KEY_FILE")
+	os.Unsetenv(DARE_PORT)
+	os.Unsetenv(DARE_HOST)
+	os.Unsetenv(DARE_TLS_ENABLED)
+	os.Unsetenv(DARE_TLS_CERT_FILE)
+	os.Unsetenv(DARE_TLS_KEY_FILE)
 
 	// Create a new configuration
 	config := NewConfiguration()

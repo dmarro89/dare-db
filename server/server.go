@@ -10,8 +10,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/dmarro89/dare-db/database"
 )
 
 type Server interface {
@@ -20,17 +18,17 @@ type Server interface {
 }
 
 type HttpServer struct {
-	dareServer    IDareServer
+	dareServer    IDare
 	httpServer    *http.Server
 	configuration *Configuration
 	sigChan       chan os.Signal
 }
 
-func NewHttpServer() *HttpServer {
+func NewHttpServer(dareServer IDare) *HttpServer {
 	return &HttpServer{
 		configuration: NewConfiguration(),
 		sigChan:       make(chan os.Signal, 1),
-		dareServer:    NewDareServer(database.NewDatabase()),
+		dareServer:    dareServer,
 	}
 }
 
@@ -65,17 +63,17 @@ func (server *HttpServer) Stop() {
 }
 
 type HttpsServer struct {
-	dareServer    IDareServer
+	dareServer    IDare
 	httpsServer   *http.Server
 	configuration *Configuration
 	sigChan       chan os.Signal
 }
 
-func NewHttpsServer() *HttpsServer {
+func NewHttpsServer(dareServer IDare) *HttpsServer {
 	return &HttpsServer{
 		configuration: NewConfiguration(),
 		sigChan:       make(chan os.Signal, 1),
-		dareServer:    NewDareServer(database.NewDatabase()),
+		dareServer:    dareServer,
 	}
 }
 

@@ -15,11 +15,6 @@ type MockDatabase struct {
 	mock.Mock
 }
 
-func (db *MockDatabase) SomeDatabaseMethod() error {
-	args := db.Called()
-	return args.Error(0)
-}
-
 // Mock DareServer
 type MockDareServer struct {
 	mock.Mock
@@ -30,8 +25,15 @@ func (ds *MockDareServer) CreateMux() *http.ServeMux {
 	return args.Get(0).(*http.ServeMux)
 }
 
+func (ds *MockDareServer) HandlerGetById(w http.ResponseWriter, r *http.Request) {
+}
+func (ds *MockDareServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
+}
+func (ds *MockDareServer) HandlerDelete(w http.ResponseWriter, r *http.Request) {
+}
+
 func TestNewHttpServer(t *testing.T) {
-	server := NewHttpServer()
+	server := NewHttpServer(&MockDareServer{})
 	assert.Assert(t, server != nil)
 	assert.Assert(t, server.configuration != nil)
 	assert.Assert(t, server.sigChan != nil)
@@ -66,7 +68,7 @@ func TestHttpServerStartAndStop(t *testing.T) {
 }
 
 func TestNewHttpsServer(t *testing.T) {
-	server := NewHttpsServer()
+	server := NewHttpsServer(&MockDareServer{})
 	assert.Assert(t, server != nil)
 	assert.Assert(t, server.configuration != nil)
 	assert.Assert(t, server.sigChan != nil)

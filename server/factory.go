@@ -5,22 +5,22 @@ import (
 	"strings"
 )
 
-type ServerFactory struct {
+type Factory struct {
 }
 
-func NewServerFactory() *ServerFactory {
-	return &ServerFactory{}
+func NewFactory() *Factory {
+	return &Factory{}
 }
 
-func (f *ServerFactory) NewServer() Server {
+func (f *Factory) GetWebServer(dareServer IDare) Server {
 	if f.getTLSEnabled() {
-		return NewHttpsServer()
+		return NewHttpsServer(dareServer)
 	}
 
-	return NewHttpServer()
+	return NewHttpServer(dareServer)
 }
 
-func (f *ServerFactory) getTLSEnabled() bool {
-	tlsEnabled := os.Getenv("TLS_ENABLED")
+func (f *Factory) getTLSEnabled() bool {
+	tlsEnabled := os.Getenv(DARE_TLS_ENABLED)
 	return strings.EqualFold(tlsEnabled, "true")
 }

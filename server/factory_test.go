@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/dmarro89/dare-db/database"
 	"gotest.tools/assert"
 )
 
@@ -13,59 +14,59 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// Teardown code here
-	os.Unsetenv("TLS_ENABLED")
+	os.Unsetenv(DARE_TLS_ENABLED)
 
 	// Exit with the proper code
 	os.Exit(code)
 }
 
 func TestNewServerFactory(t *testing.T) {
-	factory := NewServerFactory()
+	factory := NewFactory()
 	assert.Assert(t, factory != nil, "NewServerFactory() should not return nil")
 }
 
 func TestNewServerWithTlsEnabled(t *testing.T) {
-	// Set the TLS_ENABLED environment variable to "true"
-	os.Setenv("TLS_ENABLED", "true")
+	// Set the DARE_TLS_ENABLED environment variable to "true"
+	os.Setenv(DARE_TLS_ENABLED, "true")
 
-	factory := NewServerFactory()
-	server := factory.NewServer()
+	factory := NewFactory()
+	server := factory.GetWebServer(NewDareServer(database.NewDatabase()))
 
 	// Assert that the server is of type HttpsServer
 	_, isHttpsServer := server.(*HttpsServer)
 	assert.Assert(t, isHttpsServer, "NewServer() should return an HttpsServer when TLS_ENABLED is true")
 
 	// Cleanup
-	os.Unsetenv("TLS_ENABLED")
+	os.Unsetenv(DARE_TLS_ENABLED)
 }
 
 func TestNewServerWithTlsDisabled(t *testing.T) {
-	// Set the TLS_ENABLED environment variable to "false"
-	os.Setenv("TLS_ENABLED", "false")
+	// Set the DARE_TLS_ENABLED environment variable to "false"
+	os.Setenv(DARE_TLS_ENABLED, "false")
 
-	factory := NewServerFactory()
-	server := factory.NewServer()
+	factory := NewFactory()
+	server := factory.GetWebServer(NewDareServer(database.NewDatabase()))
 
 	// Assert that the server is of type HttpServer
 	_, isHttpServer := server.(*HttpServer)
 	assert.Assert(t, isHttpServer, "NewServer() should return an HttpServer when TLS_ENABLED is false")
 
 	// Cleanup
-	os.Unsetenv("TLS_ENABLED")
+	os.Unsetenv(DARE_TLS_ENABLED)
 }
 
 func TestGetTlsEnabled(t *testing.T) {
-	factory := NewServerFactory()
+	factory := NewFactory()
 
-	// Test when TLS_ENABLED is "true"
-	os.Setenv("TLS_ENABLED", "true")
+	// Test when DARE_TLS_ENABLED is "true"
+	os.Setenv(DARE_TLS_ENABLED, "true")
 	assert.Assert(t, factory.getTLSEnabled(), "getTLSEnabled() should return true when TLS_ENABLED is 'true'")
 
-	// Test when TLS_ENABLED is "false"
-	os.Setenv("TLS_ENABLED", "false")
+	// Test when DARE_TLS_ENABLED is "false"
+	os.Setenv(DARE_TLS_ENABLED, "false")
 	assert.Assert(t, !factory.getTLSEnabled(), "getTLSEnabled() should return false when TLS_ENABLED is 'false'")
 
-	// Test when TLS_ENABLED is not set
-	os.Unsetenv("TLS_ENABLED")
+	// Test when DARE_TLS_ENABLED is not set
+	os.Unsetenv(DARE_TLS_ENABLED)
 	assert.Assert(t, !factory.getTLSEnabled(), "getTLSEnabled() should return false when TLS_ENABLED is not set")
 }
