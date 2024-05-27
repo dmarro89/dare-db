@@ -27,7 +27,7 @@ func TestNewServerFactory(t *testing.T) {
 
 func TestNewServerWithTlsEnabled(t *testing.T) {
 	// Set the DARE_TLS_ENABLED environment variable to "true"
-	os.Setenv(DARE_TLS_ENABLED, "true")
+	t.Setenv(DARE_TLS_ENABLED, "true")
 
 	factory := NewFactory()
 	server := factory.GetWebServer(NewDareServer(database.NewDatabase()))
@@ -35,14 +35,11 @@ func TestNewServerWithTlsEnabled(t *testing.T) {
 	// Assert that the server is of type HttpsServer
 	_, isHttpsServer := server.(*HttpsServer)
 	assert.Assert(t, isHttpsServer, "NewServer() should return an HttpsServer when TLS_ENABLED is true")
-
-	// Cleanup
-	os.Unsetenv(DARE_TLS_ENABLED)
 }
 
 func TestNewServerWithTlsDisabled(t *testing.T) {
 	// Set the DARE_TLS_ENABLED environment variable to "false"
-	os.Setenv(DARE_TLS_ENABLED, "false")
+	t.Setenv(DARE_TLS_ENABLED, "false")
 
 	factory := NewFactory()
 	server := factory.GetWebServer(NewDareServer(database.NewDatabase()))
@@ -50,20 +47,17 @@ func TestNewServerWithTlsDisabled(t *testing.T) {
 	// Assert that the server is of type HttpServer
 	_, isHttpServer := server.(*HttpServer)
 	assert.Assert(t, isHttpServer, "NewServer() should return an HttpServer when TLS_ENABLED is false")
-
-	// Cleanup
-	os.Unsetenv(DARE_TLS_ENABLED)
 }
 
 func TestGetTlsEnabled(t *testing.T) {
 	factory := NewFactory()
 
 	// Test when DARE_TLS_ENABLED is "true"
-	os.Setenv(DARE_TLS_ENABLED, "true")
+	t.Setenv(DARE_TLS_ENABLED, "true")
 	assert.Assert(t, factory.getTLSEnabled(), "getTLSEnabled() should return true when TLS_ENABLED is 'true'")
 
 	// Test when DARE_TLS_ENABLED is "false"
-	os.Setenv(DARE_TLS_ENABLED, "false")
+	t.Setenv(DARE_TLS_ENABLED, "false")
 	assert.Assert(t, !factory.getTLSEnabled(), "getTLSEnabled() should return false when TLS_ENABLED is 'false'")
 
 	// Test when DARE_TLS_ENABLED is not set

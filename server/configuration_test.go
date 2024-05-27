@@ -1,7 +1,6 @@
 package server
 
 import (
-	"os"
 	"testing"
 
 	"gotest.tools/assert"
@@ -9,11 +8,11 @@ import (
 
 func TestNewConfiguration(t *testing.T) {
 	// Set environment variables
-	os.Setenv(DARE_PORT, "8080")
-	os.Setenv(DARE_HOST, "localhost")
-	os.Setenv(DARE_TLS_ENABLED, "true")
-	os.Setenv(DARE_TLS_CERT_FILE, "/path/to/cert")
-	os.Setenv(DARE_TLS_KEY_FILE, "/path/to/key")
+	t.Setenv(DARE_PORT, "8080")
+	t.Setenv(DARE_HOST, "localhost")
+	t.Setenv(DARE_TLS_ENABLED, "true")
+	t.Setenv(DARE_TLS_CERT_FILE, "/path/to/cert")
+	t.Setenv(DARE_TLS_KEY_FILE, "/path/to/key")
 
 	// Create a new configuration
 	config := NewConfiguration()
@@ -24,23 +23,9 @@ func TestNewConfiguration(t *testing.T) {
 	assert.Equal(t, config.TLSEnabled, true, "TLSEnabled should be true")
 	assert.Equal(t, "/path/to/cert", config.TLSCertFile, "TLSCertFile should be '/path/to/cert'")
 	assert.Equal(t, "/path/to/key", config.TLSKeyFile, "TLSKeyFile should be '/path/to/key'")
-
-	// Cleanup environment variables
-	os.Unsetenv(DARE_PORT)
-	os.Unsetenv(DARE_HOST)
-	os.Unsetenv(DARE_TLS_ENABLED)
-	os.Unsetenv(DARE_TLS_CERT_FILE)
-	os.Unsetenv(DARE_TLS_KEY_FILE)
 }
 
 func TestNewConfigurationDefaults(t *testing.T) {
-	// Ensure environment variables are not set
-	os.Unsetenv(DARE_PORT)
-	os.Unsetenv(DARE_HOST)
-	os.Unsetenv(DARE_TLS_ENABLED)
-	os.Unsetenv(DARE_TLS_CERT_FILE)
-	os.Unsetenv(DARE_TLS_KEY_FILE)
-
 	// Create a new configuration
 	config := NewConfiguration()
 
@@ -53,25 +38,21 @@ func TestNewConfigurationDefaults(t *testing.T) {
 }
 
 func TestGetEnvOrDefault(t *testing.T) {
-	os.Setenv("TEST_ENV", "value")
+	t.Setenv("TEST_ENV", "value")
 
 	result := getEnvOrDefault("TEST_ENV", "default")
 	assert.Equal(t, "value", result, "Result should be 'value'")
 
 	result = getEnvOrDefault("MISSING_ENV", "default")
 	assert.Equal(t, "default", result, "Result should be 'default'")
-
-	os.Unsetenv("TEST_ENV")
 }
 
 func TestGetEnvBooleanOrDefault(t *testing.T) {
-	os.Setenv("BOOL_ENV", "true")
+	t.Setenv("BOOL_ENV", "true")
 
 	result := getEnvBooleanOrDefault("BOOL_ENV", false)
 	assert.Equal(t, result, true, "Result should be true")
 
 	result = getEnvBooleanOrDefault("MISSING_BOOL_ENV", false)
 	assert.Equal(t, result, false, "Result should be false")
-
-	os.Unsetenv("BOOL_ENV")
 }
