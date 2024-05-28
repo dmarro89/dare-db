@@ -11,8 +11,8 @@ func TestNewConfiguration(t *testing.T) {
 	t.Setenv(DARE_PORT, "8080")
 	t.Setenv(DARE_HOST, "localhost")
 	t.Setenv(DARE_TLS_ENABLED, "true")
-	t.Setenv(DARE_TLS_CERT_FILE, "/path/to/cert")
-	t.Setenv(DARE_TLS_KEY_FILE, "/path/to/key")
+	t.Setenv(DARE_TLS_CERT_PRIVATE, "/path/to/cert")
+	t.Setenv(DARE_TLS_CERT_PUBLIC, "/path/to/key")
 
 	// Create a new configuration
 	config := NewConfiguration()
