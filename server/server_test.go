@@ -10,6 +10,9 @@ import (
 	"gotest.tools/assert"
 )
 
+// constants
+const SLEEP_ON_START int = 3
+
 // Mock Database
 type MockDatabase struct {
 	mock.Mock
@@ -54,7 +57,7 @@ func TestHttpServerStartAndStop(t *testing.T) {
 
 	// Start server
 	go server.Start()
-	time.Sleep(3 * time.Second) // Give it time to start
+	time.Sleep(time.Duration(SLEEP_ON_START) * time.Second) // Give it time to start
 
 	// Verify the server is running
 	assert.Assert(t, server.httpServer != nil)
@@ -62,7 +65,7 @@ func TestHttpServerStartAndStop(t *testing.T) {
 	// Stop server
 	server.Stop()
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(time.Duration(SLEEP_ON_START) * time.Second)
 	// Verify the server is stopped
 	assert.Assert(t, server.httpServer == nil)
 }
@@ -90,7 +93,7 @@ func TestHttpsServerStartAndStop(t *testing.T) {
 
 	// Start server
 	go server.Start()
-	time.Sleep(1 * time.Second) // Give it time to start
+	time.Sleep(time.Duration(SLEEP_ON_START) * time.Second) // Give it time to start
 
 	// Verify the server is running
 	assert.Assert(t, server.httpsServer != nil)
