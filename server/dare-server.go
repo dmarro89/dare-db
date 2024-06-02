@@ -49,7 +49,7 @@ func (srv *DareServer) HandlerGetById(w http.ResponseWriter, r *http.Request) {
 
 	val := srv.db.Get(key)
 	if val == nil {
-		http.Error(w, fmt.Sprintf(`Key "%s" not found`, key), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf(`Key "%v" not found`, key), http.StatusNotFound)
 		return
 	}
 

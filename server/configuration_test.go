@@ -1,58 +1,88 @@
 package server
 
 import (
+	"fmt"
+	"os"
+	"strings"
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestNewConfiguration(t *testing.T) {
-	// Set environment variables
-	t.Setenv(DARE_PORT, "8080")
-	t.Setenv(DARE_HOST, "localhost")
-	t.Setenv(DARE_TLS_ENABLED, "true")
-	t.Setenv(DARE_TLS_CERT_PRIVATE, "/path/to/cert")
-	t.Setenv(DARE_TLS_CERT_PUBLIC, "/path/to/key")
+const TEST_CONFIG_FILE string = "config-test.toml"
+const TEST_CONFIGURATION_DIR = "server"
 
-	// Create a new configuration
-	config := NewConfiguration()
+var TEST_FOLDERS = []string{"data", "settings"}
+
+func SetupTestConfiguration() {
+	checkCorrectTestDirectory()
+	Configure(TEST_CONFIG_FILE)
+}
+
+func TeardownTestConfiguration() {
+	checkCorrectTestDirectory()
+	err := removeFileOrDirIfExists(TEST_CONFIG_FILE)
+	if err != nil {
+		fmt.Println("Error:", err)
+	} else {
+		fmt.Println("File was removed successfully (if it existed):", TEST_CONFIG_FILE)
+	}
+
+	for _, folder := range TEST_FOLDERS {
+		err := removeFileOrDirIfExists(folder)
+		if err != nil {
+			fmt.Println("Error:", err)
+		} else {
+			fmt.Println("Folder was removed successfully (if it existed):", TEST_CONFIG_FILE)
+		}
+	}
+}
+
+// check, if tests run in the right directory
+func checkCorrectTestDirectory() {
+	baseDir, _ := os.Getwd()
+	if !strings.HasSuffix(baseDir, TEST_CONFIGURATION_DIR) {
+		panic("Wrong directory for running this test. Possibility to delete data and settings folders.")
+	}
+}
+
+func removeFileOrDirIfExists(filePath string) error {
+	_, err := os.Stat(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	err = os.RemoveAll(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to remove file/directory: %w", err)
+	}
+	return nil
+}
+
+func TestDefaultParameters(t *testing.T) {
+
+	SetupTestConfiguration()
+	defer TeardownTestConfiguration()
 
 	// Check if the values are correctly set
-	assert.Equal(t, "8080", config.Port, "Port should be '8080'")
-	assert.Equal(t, "localhost", config.Host, "Host should be 'localhost'")
-	assert.Equal(t, config.TLSEnabled, true, "TLSEnabled should be true")
-	assert.Equal(t, "/path/to/cert", config.TLSCertFile, "TLSCertFile should be '/path/to/cert'")
-	assert.Equal(t, "/path/to/key", config.TLSKeyFile, "TLSKeyFile should be '/path/to/key'")
+	assert.Equal(t, "127.0.0.1", viper.GetString("server.host"), "Host should be '127.0.0.1'")
+	assert.Equal(t, "2605", viper.GetString("server.port"), "Port should be '2605'")
+	assert.Equal(t, "admin", viper.GetString("server.admin_user"), "Admin name should be 'admin'")
+	assert.Equal(t, "INFO", viper.GetString("log.log_level"), "Must be 'INFO'")
+	assert.Equal(t, "daredb.log", viper.GetString("log.log_file"), "Must be 'daredb.log'")
+	assert.Equal(t, false, viper.GetBool("security.tls_enabled"), "Must be 'false'")
 }
 
-func TestNewConfigurationDefaults(t *testing.T) {
-	// Create a new configuration
-	config := NewConfiguration()
+func TestConfigurationConstants(t *testing.T) {
 
-	// Check if the values are correctly set to defaults
-	assert.Equal(t, "2605", config.Port, "Port should be '2605'")
-	assert.Equal(t, "", config.Host, "Host should be ''")
-	assert.Equal(t, config.TLSEnabled, false, "TLSEnabled should be false")
-	assert.Equal(t, "", config.TLSCertFile, "TLSCertFile should be ''")
-	assert.Equal(t, "", config.TLSKeyFile, "TLSKeyFile should be ''")
-}
+	SetupTestConfiguration()
+	defer TeardownTestConfiguration()
 
-func TestGetEnvOrDefault(t *testing.T) {
-	t.Setenv("TEST_ENV", "value")
-
-	result := getEnvOrDefault("TEST_ENV", "default")
-	assert.Equal(t, "value", result, "Result should be 'value'")
-
-	result = getEnvOrDefault("MISSING_ENV", "default")
-	assert.Equal(t, "default", result, "Result should be 'default'")
-}
-
-func TestGetEnvBooleanOrDefault(t *testing.T) {
-	t.Setenv("BOOL_ENV", "true")
-
-	result := getEnvBooleanOrDefault("BOOL_ENV", false)
-	assert.Equal(t, result, true, "Result should be true")
-
-	result = getEnvBooleanOrDefault("MISSING_BOOL_ENV", false)
-	assert.Equal(t, result, false, "Result should be false")
+	// Check if the values are correctly set
+	assert.Equal(t, "config.toml", DEFAULT_CONFIG_FILE, "Host should be 'config.toml'")
+	assert.Equal(t, "data", DATA_DIR, "Host should be 'data'")
+	assert.Equal(t, "settings", SETTINGS_DIR, "Host should be 'settings'")
 }

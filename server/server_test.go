@@ -38,7 +38,7 @@ func (ds *MockDareServer) HandlerDelete(w http.ResponseWriter, r *http.Request) 
 func TestNewHttpServer(t *testing.T) {
 	server := NewHttpServer(&MockDareServer{})
 	assert.Assert(t, server != nil)
-	assert.Assert(t, server.configuration != nil)
+	//assert.Assert(t, server.configuration != nil)
 	assert.Assert(t, server.sigChan != nil)
 	assert.Assert(t, server.dareServer != nil)
 }
@@ -47,9 +47,9 @@ func TestHttpServerStartAndStop(t *testing.T) {
 	// Setup
 	sigChan := make(chan os.Signal, 1)
 	server := &HttpServer{
-		configuration: NewConfiguration(),
-		sigChan:       sigChan,
-		dareServer:    &MockDareServer{},
+		//configuration: NewConfiguration(),
+		sigChan:    sigChan,
+		dareServer: &MockDareServer{},
 	}
 
 	mux := http.NewServeMux()
@@ -73,7 +73,7 @@ func TestHttpServerStartAndStop(t *testing.T) {
 func TestNewHttpsServer(t *testing.T) {
 	server := NewHttpsServer(&MockDareServer{})
 	assert.Assert(t, server != nil)
-	assert.Assert(t, server.configuration != nil)
+	//assert.Assert(t, server.configuration != nil)
 	assert.Assert(t, server.sigChan != nil)
 	assert.Assert(t, server.dareServer != nil)
 }
@@ -83,9 +83,9 @@ func TestHttpsServerStartAndStop(t *testing.T) {
 	// Setup
 	sigChan := make(chan os.Signal, 1)
 	server := &HttpsServer{
-		configuration: NewConfiguration(),
-		sigChan:       sigChan,
-		dareServer:    &MockDareServer{},
+		//configuration: NewConfiguration(),
+		sigChan:    sigChan,
+		dareServer: &MockDareServer{},
 	}
 
 	mux := http.NewServeMux()
