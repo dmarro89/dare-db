@@ -20,5 +20,6 @@ func (f *Factory) GetWebServer(dareServer IDare) Server {
 }
 
 func (f *Factory) getTLSEnabled() bool {
+	//FIXME: pass teh right config to the factory
 	return viper.GetBool("security.tls_enabled")
 }

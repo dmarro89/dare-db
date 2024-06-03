@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,9 +14,9 @@ const TEST_CONFIGURATION_DIR = "server"
 
 var TEST_FOLDERS = []string{"data", "settings"}
 
-func SetupTestConfiguration() {
+func SetupTestConfiguration() Config {
 	checkCorrectTestDirectory()
-	Configure(TEST_CONFIG_FILE)
+	return NewConfiguration(TEST_CONFIG_FILE)
 }
 
 func TeardownTestConfiguration() {
@@ -64,25 +63,26 @@ func removeFileOrDirIfExists(filePath string) error {
 
 func TestDefaultParameters(t *testing.T) {
 
-	SetupTestConfiguration()
+	testConfig := SetupTestConfiguration()
 	defer TeardownTestConfiguration()
 
 	// Check if the values are correctly set
-	assert.Equal(t, "127.0.0.1", viper.GetString("server.host"), "Host should be '127.0.0.1'")
-	assert.Equal(t, "2605", viper.GetString("server.port"), "Port should be '2605'")
-	assert.Equal(t, "admin", viper.GetString("server.admin_user"), "Admin name should be 'admin'")
-	assert.Equal(t, "INFO", viper.GetString("log.log_level"), "Must be 'INFO'")
-	assert.Equal(t, "daredb.log", viper.GetString("log.log_file"), "Must be 'daredb.log'")
-	assert.Equal(t, false, viper.GetBool("security.tls_enabled"), "Must be 'false'")
+	assert.Equal(t, "127.0.0.1", testConfig.GetString("server.host"), "Host should be '127.0.0.1'")
+	assert.Equal(t, "2605", testConfig.GetString("server.port"), "Port should be '2605'")
+	assert.Equal(t, "admin", testConfig.GetString("server.admin_user"), "Admin name should be 'admin'")
+	assert.Equal(t, "INFO", testConfig.GetString("log.log_level"), "Must be 'INFO'")
+	assert.Equal(t, "daredb.log", testConfig.GetString("log.log_file"), "Must be 'daredb.log'")
+	assert.Equal(t, false, testConfig.GetBool("security.tls_enabled"), "Must be 'false'")
 }
 
 func TestConfigurationConstants(t *testing.T) {
 
-	SetupTestConfiguration()
+	testConfig := SetupTestConfiguration()
 	defer TeardownTestConfiguration()
 
 	// Check if the values are correctly set
 	assert.Equal(t, "config.toml", DEFAULT_CONFIG_FILE, "Host should be 'config.toml'")
 	assert.Equal(t, "data", DATA_DIR, "Host should be 'data'")
 	assert.Equal(t, "settings", SETTINGS_DIR, "Host should be 'settings'")
+	assert.Equal(t, SETTINGS_DIR, testConfig.GetString("settings.settings_dir"), "Host should be 'settings'")
 }

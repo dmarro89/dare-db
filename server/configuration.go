@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +13,17 @@ import (
 
 	"github.com/spf13/viper"
 )
+
+type Config interface {
+	Get(key string) interface{}
+	GetString(key string) string
+	GetBool(key string) bool
+	IsSet(key string) bool
+}
+
+type ViperConfig struct {
+	*viper.Viper
+}
 
 var mapsEnvsToConfig map[string]string = make(map[string]string)
 
@@ -38,28 +48,28 @@ func createDirectory(dirPath string) {
 	}
 }
 
-func createDefaultConfigFile(cfgFile string) {
+func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 
 	var passwordNew string = utils.GenerateRandomString(12)
 
 	logger.Info("Creating default configuration file")
 
-	viper.SetDefault("server.host", "127.0.0.1")
-	viper.SetDefault("server.port", "2605")
-	viper.SetDefault("server.admin_user", "admin")
-	viper.SetDefault("server.admin_password", passwordNew)
+	c.SetDefault("server.host", "127.0.0.1")
+	c.SetDefault("server.port", "2605")
+	c.SetDefault("server.admin_user", "admin")
+	c.SetDefault("server.admin_password", passwordNew)
 
-	viper.SetDefault("log.log_level", "INFO")
-	viper.SetDefault("log.log_file", "daredb.log")
+	c.SetDefault("log.log_level", "INFO")
+	c.SetDefault("log.log_file", "daredb.log")
 
-	viper.SetDefault("settings.data_dir", DATA_DIR)
-	viper.SetDefault("settings.settings_dir", SETTINGS_DIR)
+	c.SetDefault("settings.data_dir", DATA_DIR)
+	c.SetDefault("settings.settings_dir", SETTINGS_DIR)
 
-	viper.SetDefault("security.tls_enabled", false)
-	viper.SetDefault("security.cert_private", filepath.Join(SETTINGS_DIR, "cert_private"))
-	viper.SetDefault("security.cert_public", filepath.Join(SETTINGS_DIR, "cert_public"))
+	c.SetDefault("security.tls_enabled", false)
+	c.SetDefault("security.cert_private", filepath.Join(SETTINGS_DIR, "cert_private"))
+	c.SetDefault("security.cert_public", filepath.Join(SETTINGS_DIR, "cert_public"))
 
-	viper.WriteConfigAs(cfgFile)
+	c.WriteConfigAs(cfgFile)
 
 	fmt.Printf("\nIMPORTANT! Generate default password for admin on initial start. Store it securely. Password: %v\n\n", passwordNew)
 }
@@ -83,18 +93,18 @@ func mappingEnvsToConfig() {
 	mapsEnvsToConfig["security.cert_public"] = "DAREDB_CERT_PUBLIC"
 }
 
-func reReadConfigsFromEnvs() {
+func reReadConfigsFromEnvs(c *viper.Viper) {
 	logger.Info("Re-reading configurations from environmental variables")
 	for key, value := range mapsEnvsToConfig {
 		valueFromEnv, ok := os.LookupEnv(value)
 		if ok {
 			fmt.Println(key, valueFromEnv)
-			viper.Set(key, valueFromEnv)
+			c.Set(key, valueFromEnv)
 		}
 	}
 }
 
-func initDBDirectories() {
+func initDBDirectories(c *viper.Viper) {
 
 	dbBaseDir, err := os.Getwd()
 	if err != nil {
@@ -103,7 +113,7 @@ func initDBDirectories() {
 	os.Setenv("DAREDB_BASE_DIR", dbBaseDir)
 
 	createDirectory(filepath.Join(dbBaseDir, SETTINGS_DIR))
-	createDirectory(filepath.Join(dbBaseDir, viper.GetString("settings.data_dir")))
+	createDirectory(filepath.Join(dbBaseDir, c.GetString("settings.data_dir")))
 }
 
 func PrintConfigsToConsole() {
@@ -113,10 +123,10 @@ func PrintConfigsToConsole() {
 	}
 }
 
-func Configure(cfgFile string) {
-
+func NewConfiguration(cfgFile string) Config {
+	v := viper.New()
 	mappingEnvsToConfig()
-	viper.SetConfigType("toml")
+	v.SetConfigType("toml")
 
 	if len(strings.TrimSpace(cfgFile)) == 0 {
 		logger.Info("No configuration file was supplied. Using default value: ", DEFAULT_CONFIG_FILE)
@@ -127,15 +137,15 @@ func Configure(cfgFile string) {
 
 	if !isFileExist {
 		logger.Info("Configuration file does not exist: ", cfgFile)
-		createDefaultConfigFile(cfgFile)
+		createDefaultConfigFile(v, cfgFile)
 	}
 
 	logger.Info("Using configuration file: ", cfgFile)
 
-	viper.SetConfigFile(cfgFile)
+	v.SetConfigFile(cfgFile)
 
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal("Error reading config file:", err)
+	if err := v.ReadInConfig(); err != nil {
+		logger.Fatal("Error reading config file:", err)
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			panic("Config file was not found")
 		} else {
@@ -143,6 +153,23 @@ func Configure(cfgFile string) {
 		}
 	}
 
-	reReadConfigsFromEnvs()
-	initDBDirectories()
+	reReadConfigsFromEnvs(v)
+	initDBDirectories(v)
+	return &ViperConfig{v}
+}
+
+func (c *ViperConfig) Get(key string) interface{} {
+	return c.Viper.Get(key)
+}
+
+func (c *ViperConfig) GetString(key string) string {
+	return c.Viper.GetString(key)
+}
+
+func (c *ViperConfig) GetBool(key string) bool {
+	return c.Viper.GetBool(key)
+}
+
+func (c *ViperConfig) IsSet(key string) bool {
+	return c.Viper.IsSet(key)
 }

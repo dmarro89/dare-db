@@ -7,8 +7,6 @@ import (
 
 func main() {
 
-	server.Configure("config.toml")
-
 	database := database.NewDatabase()
 	dareServer := server.NewDareServer(database)
 	server := server.NewFactory().GetWebServer(dareServer)
