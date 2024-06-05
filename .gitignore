@@ -20,3 +20,31 @@
 # Go workspace file
 go.work
 .vscode
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Temporary files created by the Go build process
+tmp/
+pkg/
+
+# Cache directories created by Go tools
+
+# CGO (foreign function interface) cache
+_cgo_defunct.c
+_cgo_export.h
+
+# Build cache
+build/
+
+# DareDB config file
+config.toml
+
+# DareDB directories
+settings/*
+data/*
+
+# log files
+
+*.log

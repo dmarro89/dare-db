@@ -6,9 +6,11 @@ import (
 )
 
 func main() {
+
 	database := database.NewDatabase()
 	dareServer := server.NewDareServer(database)
 	server := server.NewFactory().GetWebServer(dareServer)
+
 	server.Start()
 	server.Stop()
 }

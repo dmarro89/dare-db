@@ -47,7 +47,7 @@ func TestHttpServerStartAndStop(t *testing.T) {
 	// Setup
 	sigChan := make(chan os.Signal, 1)
 	server := &HttpServer{
-		configuration: NewConfiguration(),
+		configuration: NewConfiguration(""),
 		sigChan:       sigChan,
 		dareServer:    &MockDareServer{},
 	}
@@ -83,7 +83,7 @@ func TestHttpsServerStartAndStop(t *testing.T) {
 	// Setup
 	sigChan := make(chan os.Signal, 1)
 	server := &HttpsServer{
-		configuration: NewConfiguration(),
+		configuration: NewConfiguration(""),
 		sigChan:       sigChan,
 		dareServer:    &MockDareServer{},
 	}
