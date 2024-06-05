@@ -33,18 +33,14 @@ func checkFileExists(filePath string) bool {
 }
 
 func createDirectory(dirPath string) {
-	_, err := os.Stat(dirPath)
-	if err != nil && os.IsNotExist(err) {
-		err := os.Mkdir(dirPath, 0755)
-		if err != nil {
-			logger.Error("Error creating directory:", err)
-		} else {
-			logger.Info("Directory created successfully:", dirPath)
-		}
-	} else if err != nil {
-		logger.Error("Error:", err)
-	} else {
+	err := os.MkdirAll(dirPath, 0755)
+	switch {
+	case err == nil:
+		logger.Info("Directory created successfully:", dirPath)
+	case os.IsExist(err):
 		logger.Debug("Directory already exists: ", dirPath)
+	default:
+		logger.Error("Error creating directory:", err)
 	}
 }
 
