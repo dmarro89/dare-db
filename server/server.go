@@ -28,7 +28,6 @@ type HttpServer struct {
 func NewHttpServer(dareServer IDare) *HttpServer {
 	return &HttpServer{
 		dareServer:    dareServer,
-		httpServer:    &http.Server{},
 		configuration: NewConfiguration(""),
 		sigChan:       make(chan os.Signal, 1),
 	}
