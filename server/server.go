@@ -27,9 +27,10 @@ type HttpServer struct {
 
 func NewHttpServer(dareServer IDare) *HttpServer {
 	return &HttpServer{
+		dareServer:    dareServer,
+		httpServer:    &http.Server{},
 		configuration: NewConfiguration(""),
 		sigChan:       make(chan os.Signal, 1),
-		dareServer:    dareServer,
 	}
 }
 
@@ -80,8 +81,8 @@ type HttpsServer struct {
 
 func NewHttpsServer(dareServer IDare) *HttpsServer {
 	return &HttpsServer{
-		configuration: NewConfiguration(""),
 		sigChan:       make(chan os.Signal, 1),
+		configuration: NewConfiguration(""),
 		dareServer:    dareServer,
 	}
 }
@@ -94,7 +95,9 @@ func (server *HttpsServer) Start() {
 
 	go func() {
 		logger.Info("Serving new connections on: ", server.configuration.GetString("server.host"), ":", server.configuration.GetString("server.port"))
-		if err := server.httpsServer.ListenAndServeTLS(server.configuration.GetString("security.tls_cert_private"), server.configuration.GetString("security.tls_cert_public")); !errors.Is(err, http.ErrServerClosed) {
+		logger.Info("Using certificate files. (1) ", server.configuration.GetString("security.cert_private"), " ; (2) ", server.configuration.GetString("security.cert_public"))
+
+		if err := server.httpsServer.ListenAndServeTLS(server.configuration.GetString("security.cert_public"), server.configuration.GetString("security.cert_private")); !errors.Is(err, http.ErrServerClosed) {
 			logger.Fatal("HTTPS server error: ", err)
 		}
 		logger.Info("Stopped serving new connections.")

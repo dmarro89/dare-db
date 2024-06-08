@@ -1,0 +1,47 @@
+FROM golang:1.22-bullseye as builder
+
+WORKDIR /app
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+COPY . .
+ENV GOCACHE=/root/.cache/go-build
+RUN --mount=type=cache,target="/root/.cache/go-build" go build -o app
+
+# handle self-signed certificates
+FROM ubuntu:latest AS tls-cert-gen
+RUN set -x \
+    && apt-get update \
+    && apt-get install -y \
+    openssl
+
+RUN mkdir -p /ssl/settings
+    
+RUN openssl req \
+    -x509 -nodes -newkey rsa:2048 \
+    -keyout /ssl/settings/cert_private.pem \
+    -out /ssl/settings/cert_public.pem \
+    -sha256 -days 365 \
+    -subj "/C=EU/ST=Earth/L=Earth/O=DareDB/OU=DareDB/CN=localhost"
+
+# handle database
+FROM ubuntu:22.04 as dare-db-tls
+
+RUN mkdir /app
+RUN mkdir -p /app/settings
+
+# set envs for database
+ENV DARE_TLS_ENABLED=True
+ENV DARE_CERT_PRIVATE=/app/settings/cert_private.pem
+ENV DARE_CERT_PUBLIC=/app/settings/cert_public.pem
+
+WORKDIR /app
+
+COPY --from=builder /app/app .
+
+COPY --from=tls-cert-gen /ssl/settings/cert_private.pem /app/settings/cert_private.pem
+COPY --from=tls-cert-gen /ssl/settings/cert_public.pem /app/settings/cert_public.pem
+
+ENTRYPOINT ["./app"]
