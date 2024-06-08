@@ -39,7 +39,7 @@ func TestNewServerWithTlsEnabled(t *testing.T) {
 
 	// Assert that the server is of type HttpsServer
 	_, isHttpsServer := server.(*HttpsServer)
-	assert.Assert(t, !isHttpsServer, "NewServer() should return an HttpsServer when TLS_ENABLED is false")
+	assert.Assert(t, isHttpsServer, "NewServer() should return an HttpsServer when TLS_ENABLED is true")
 }
 
 func TestNewServerWithTlsDisabled(t *testing.T) {
