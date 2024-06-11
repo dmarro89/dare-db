@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -12,14 +13,16 @@ import (
 func TestMain(m *testing.M) {
 
 	// Init configuration first
-	//testConf := SetupTestConfiguration()
+	//os.Setenv("DARE_LOG_FILE", "dare-test.log")
+	testConf := SetupTestConfiguration()
+	fmt.Println("Test log file should be: ", testConf.Get("log.log_file"))
 
 	// Run the tests
 	code := m.Run()
 
 	// Teardown code here
 	os.Unsetenv("DARE_TLS_ENABLED")
-	//TeardownTestConfiguration()
+	TeardownTestConfiguration()
 
 	// Exit with the proper code
 	os.Exit(code)
@@ -39,7 +42,7 @@ func TestNewServerWithTlsEnabled(t *testing.T) {
 
 	// Assert that the server is of type HttpsServer
 	_, isHttpsServer := server.(*HttpsServer)
-	assert.Assert(t, !isHttpsServer, "NewServer() should return an HttpsServer when TLS_ENABLED is false")
+	assert.Assert(t, isHttpsServer, "NewServer() should return an HttpsServer when TLS_ENABLED is true")
 }
 
 func TestNewServerWithTlsDisabled(t *testing.T) {
