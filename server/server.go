@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dmarro89/dare-db/logger"
+	//"github.com/dmarro89/dare-db/logger"
 )
 
 type Server interface {
@@ -36,7 +36,7 @@ func NewHttpServer(dareServer IDare) *HttpServer {
 func (server *HttpServer) Start() {
 
 	if server.configuration.IsSet("log.log_file") {
-		logger.OpenLogFile(server.configuration.GetString("log.log_file"))
+		//logger.OpenLogFile(server.configuration.GetString("log.log_file"))
 	}
 
 	server.httpServer = &http.Server{
@@ -45,12 +45,12 @@ func (server *HttpServer) Start() {
 	}
 
 	go func() {
-		logger.Info("Serving new connections on: ", server.configuration.GetString("server.host"), ":", server.configuration.GetString("server.port"))
+		//logger.Info("Serving new connections on: %s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port"))
 		if err := server.httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Fatal("HTTP server error: %v", err)
+			//logger.Fatal("HTTP server error: %v", err)
 		}
-		logger.Info("Stopped serving new connections.")
-		logger.CloseLogFile()
+		//logger.Info("Stopped serving new connections.")
+		//logger.CloseLogFile()
 	}()
 
 	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -62,13 +62,13 @@ func (server *HttpServer) Stop() {
 	defer shutdownRelease()
 
 	if err := server.httpServer.Shutdown(shutdownCtx); err != nil {
-		logger.Fatal("HTTP shutdown error:", err)
+		//logger.Fatal("HTTP shutdown error: %v", err)
 	}
 
-	logger.Info("Graceful shutdown complete.")
+	//logger.Info("Graceful shutdown complete.")
 	server.httpServer = nil
 
-	logger.CloseLogFile()
+	//logger.CloseLogFile()
 }
 
 type HttpsServer struct {
@@ -93,14 +93,14 @@ func (server *HttpsServer) Start() {
 	}
 
 	go func() {
-		logger.Info("Serving new connections on: ", server.configuration.GetString("server.host"), ":", server.configuration.GetString("server.port"))
-		logger.Info("Using certificate files. (1) ", server.configuration.GetString("security.cert_private"), " ; (2) ", server.configuration.GetString("security.cert_public"))
+		//logger.Info("Serving new connections on: %s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port"))
+		//logger.Info("Using certificate files. (1) ", server.configuration.GetString("security.cert_private"), " ; (2) ", server.configuration.GetString("security.cert_public"))
 
 		if err := server.httpsServer.ListenAndServeTLS(server.configuration.GetString("security.cert_public"), server.configuration.GetString("security.cert_private")); !errors.Is(err, http.ErrServerClosed) {
-			logger.Fatal("HTTPS server error: ", err)
+			//logger.Fatal("HTTPS server error: ", err)
 		}
-		logger.Info("Stopped serving new connections.")
-		logger.CloseLogFile()
+		//logger.Info("Stopped serving new connections.")
+		//logger.CloseLogFile()
 	}()
 
 	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -112,10 +112,10 @@ func (server *HttpsServer) Stop() {
 	defer shutdownRelease()
 
 	if err := server.httpsServer.Shutdown(shutdownCtx); err != nil {
-		logger.Fatal("HTTP shutdown error:", err)
+		//logger.Fatal("HTTP shutdown error: %v", err)
 	}
 
-	logger.Info("Graceful shutdown complete.")
+	//logger.Info("Graceful shutdown complete.")
 	server.httpsServer = nil
-	logger.CloseLogFile()
+	//logger.CloseLogFile()
 }

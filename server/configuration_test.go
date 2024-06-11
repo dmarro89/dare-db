@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
-
+	"github.com/dmarro89/dare-db/server"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +16,7 @@ var TEST_FOLDERS = []string{"data", "settings"}
 
 func SetupTestConfiguration() Config {
 	checkCorrectTestDirectory()
-	return NewConfiguration(TEST_CONFIG_FILE)
+	return server.NewConfiguration(TEST_CONFIG_FILE)
 }
 
 func TeardownTestConfiguration() {

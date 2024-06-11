@@ -1,5 +1,3 @@
-// database_test.go
-
 package database
 
 import (

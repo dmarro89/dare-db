@@ -7,13 +7,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/dmarro89/dare-db/server"
 	"github.com/dmarro89/dare-db/database"
+	"github.com/dmarro89/dare-db/logger"
 	"gotest.tools/assert"
 )
 
 func TestServer_SetAndGet(t *testing.T) {
-	db := database.NewDatabase()
-	srv := NewDareServer(db)
+	logger := logger.NewLogger(logger.INFO)
+	db := database.NewDatabase(logger)
+	srv := server.NewDareServer(db)
 
 	setWrongResponse := httptest.NewRecorder()
 	setWrongRequest, _ := http.NewRequest("GET", "/set", bytes.NewBuffer([]byte{}))
@@ -64,8 +67,9 @@ func TestServer_SetAndGet(t *testing.T) {
 }
 
 func TestServer_SetAndDelete(t *testing.T) {
-	db := database.NewDatabase()
-	srv := NewDareServer(db)
+	logger := logger.NewLogger(logger.INFO)
+	db := database.NewDatabase(logger)
+	srv := server.NewDareServer(db)
 
 	setData := map[string]interface{}{"testKey": "testValue"}
 	setDataJSON, _ := json.Marshal(setData)
@@ -109,8 +113,9 @@ func TestServer_SetAndDelete(t *testing.T) {
 
 func TestCreateMux(t *testing.T) {
 	// Create a new instance of DareServer
-	db := database.NewDatabase()
-	srv := NewDareServer(db)
+	logger := logger.NewLogger(logger.INFO)
+	db := database.NewDatabase(logger)
+	srv := server.NewDareServer(db)
 
 	// Create a new ServeMux using the CreateMux method
 	mux := srv.CreateMux()

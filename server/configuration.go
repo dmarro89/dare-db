@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/dmarro89/dare-db/logger"
+	_ "github.com/dmarro89/dare-db/logger" // hum ... can't use here as we have no pointer?
 	"github.com/dmarro89/dare-db/utils"
-
+	"log"
 	"github.com/spf13/viper"
 )
 
@@ -36,11 +36,11 @@ func createDirectory(dirPath string) {
 	err := os.MkdirAll(dirPath, 0755)
 	switch {
 	case err == nil:
-		logger.Info("Directory created successfully: ", dirPath)
+		log.Printf("Directory created successfully: %s", dirPath) // info
 	case os.IsExist(err):
-		logger.Debug("Directory already exists: ", dirPath)
+		log.Printf("Directory already exists: %s", dirPath) // debug
 	default:
-		logger.Error("Error creating directory:", err)
+		log.Printf("Error creating directory: %v", err) // error
 	}
 }
 
@@ -48,7 +48,7 @@ func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 
 	var passwordNew string = utils.GenerateRandomString(12)
 
-	logger.Info("Creating default configuration file")
+	log.Printf("Creating default configuration file")
 
 	c.SetDefault("server.host", "127.0.0.1")
 	c.SetDefault("server.port", "2605")
@@ -90,11 +90,11 @@ func mappingEnvsToConfig() {
 }
 
 func reReadConfigsFromEnvs(c *viper.Viper) {
-	logger.Info("Re-reading configurations from environmental variables")
+	log.Printf("Re-reading configurations from environmental variables")
 	for key, value := range mapsEnvsToConfig {
 		valueFromEnv, ok := os.LookupEnv(value)
 		if ok {
-			logger.Info("Use new configuration value from environmental variable for: ", key)
+			log.Printf("Use new configuration value from environmental variable for: %s", key)
 			fmt.Println(key, valueFromEnv)
 			c.Set(key, valueFromEnv)
 		}
@@ -105,7 +105,7 @@ func initDBDirectories(c *viper.Viper) {
 
 	dbBaseDir, err := os.Getwd()
 	if err != nil {
-		logger.Error("Error in getting current working directory:", err)
+		log.Fatalf("Error in getting current working directory: %v", err)
 	}
 	os.Setenv("DARE_BASE_DIR", dbBaseDir)
 
@@ -126,23 +126,23 @@ func NewConfiguration(cfgFile string) Config {
 	v.SetConfigType("toml")
 
 	if len(strings.TrimSpace(cfgFile)) == 0 {
-		logger.Info("No configuration file was supplied. Using default value: ", DEFAULT_CONFIG_FILE)
+		log.Printf("No configuration file was supplied. Using default value: %s", DEFAULT_CONFIG_FILE)
 		cfgFile = DEFAULT_CONFIG_FILE
 	}
 
 	isFileExist := checkFileExists(cfgFile)
 
 	if !isFileExist {
-		logger.Info("Configuration file does not exist: ", cfgFile)
+		log.Printf("Configuration file does not exist: %s", cfgFile)
 		createDefaultConfigFile(v, cfgFile)
 	}
 
-	logger.Info("Using configuration file: ", cfgFile)
+	log.Printf("Using configuration file: %s", cfgFile)
 
 	v.SetConfigFile(cfgFile)
 
 	if err := v.ReadInConfig(); err != nil {
-		logger.Fatal("Error reading config file:", err)
+		log.Fatalf("Error reading config file: %v", err)
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			panic("Config file was not found")
 		} else {

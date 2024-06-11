@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
+	"github.com/dmarro89/dare-db/logger"
 	"github.com/dmarro89/dare-db/database"
 )
 
@@ -19,16 +19,19 @@ type IDare interface {
 
 type DareServer struct {
 	db *database.Database
+	logger *darelog.LOG
 }
 
-func NewDareServer(db *database.Database) *DareServer {
+func NewDareServer(db *database.Database, logger *darelog.LOG) *DareServer {
 	return &DareServer{
 		db: db,
+		logger: logger,
 	}
 }
 
 func (srv *DareServer) CreateMux() *http.ServeMux {
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /loglvl/{key}", srv.SetLogLvl)
 	mux.HandleFunc("GET /get/{key}", srv.HandlerGetById)
 	mux.HandleFunc("POST /set", srv.HandlerSet)
 	mux.HandleFunc("DELETE /delete/{key}", srv.HandlerDelete)
@@ -107,4 +110,19 @@ func (srv *DareServer) HandlerDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (srv *DareServer) SetLogLvl(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	key := r.PathValue(KEY_PARAM)
+	if key == "" {
+		http.Error(w, `url path param "key" cannot be empty`, http.StatusBadRequest)
+		return
+	}
+	// TODO test
+	srv.logger.SetLOGLEVEL(darelog.GetLOGLEVEL(key))
+	return
 }
