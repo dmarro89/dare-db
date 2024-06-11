@@ -52,8 +52,7 @@ func (server *HttpServer) Start() {
 			server.logger.Fatal("HTTP server error: %v", err)
 		}
 		server.logger.Info("HttpServer Stopped serving new connections.")
-		// TODO!FIXME logger should close the logfile
-		//server.logger.CloseLogFile()
+		server.logger.CloseLogFile()
 	}()
 
 	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -71,8 +70,7 @@ func (server *HttpServer) Stop() {
 	server.logger.Info("HttpServer Graceful shutdown complete.")
 	server.httpServer = nil
 
-	// TODO!FIXME logger should  close the logfile, not each http(s)-server
-	//server.logger.CloseLogFile()
+	server.logger.CloseLogFile()
 }
 
 type HttpsServer struct {
@@ -106,8 +104,7 @@ func (server *HttpsServer) Start() {
 			server.logger.Fatal("HTTPS server error: ", err)
 		}
 		server.logger.Info("HttpsServer Stopped serving new connections.")
-		// TODO!FIXME logger should close the logfile
-		//server.logger.CloseLogFile()
+		server.logger.CloseLogFile()
 	}()
 
 	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -124,6 +121,5 @@ func (server *HttpsServer) Stop() {
 
 	server.logger.Info("HttpsServer Graceful shutdown complete.")
 	server.httpsServer = nil
-	// TODO!FIXME logger should close the logfile
-	//server.logger.CloseLogFile()
+	server.logger.CloseLogFile()
 }

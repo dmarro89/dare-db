@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"log"
+	"sync"
 )
 
 const (
@@ -15,6 +16,7 @@ const (
 
 
 type LOG struct {
+	mux sync.Mutex
 	LogFile *os.File
 	LVL int
 }
@@ -56,21 +58,34 @@ func (l *LOG) SetOutput(writer io.Writer) {
 
 // OpenLogFile opens a log file for writing.
 func (l *LOG) OpenLogFile(filename string) {
+	l.mux.Lock()
+	defer l.mux.Unlock()
+	if l.LogFile != nil {
+		return
+	}
 	logFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Error opening log file:", err)
 	}
-	l.ConfigureFileAndConsoleOutput(logFile)
+	l.LogFile = logFile
+	l.ConfigureFileAndConsoleOutput()
 }
 
 // OpenLogFile opens a log file for writing.
 func (l *LOG) CloseLogFile() {
-	l.LogFile.Close()
+	l.mux.Lock()
+	defer l.mux.Unlock()
+	if l.LogFile != nil {
+		l.LogFile.Close()
+	}
 }
 
 // ConfigureFileAndConsoleOutput configures the logger to write to both a file and console.
-func (l *LOG) ConfigureFileAndConsoleOutput(logFile *os.File) {
-	writer := io.MultiWriter(os.Stdout, logFile)
+func (l *LOG) ConfigureFileAndConsoleOutput() {
+	if l.LogFile == nil {
+		return
+	}
+	writer := io.MultiWriter(os.Stdout, l.LogFile)
 	log.SetOutput(writer)
 }
 
