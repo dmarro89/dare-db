@@ -3,6 +3,7 @@ package server
 import (
 	"os"
 	"strconv"
+	"github.com/dmarro89/dare-db/logger"
 )
 
 type Factory struct {
@@ -12,13 +13,13 @@ func NewFactory() *Factory {
 	return &Factory{}
 }
 
-func (f *Factory) GetWebServer(dareServer IDare) Server {
+func (f *Factory) GetWebServer(dareServer IDare, logger *darelog.LOG) Server {
 
 	if f.getTLSEnabled() {
-		return NewHttpsServer(dareServer)
+		return NewHttpsServer(dareServer, logger)
 	}
 
-	return NewHttpServer(dareServer)
+	return NewHttpServer(dareServer, logger)
 }
 
 func (f *Factory) getTLSEnabled() bool {

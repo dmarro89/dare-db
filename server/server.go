@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	//"github.com/dmarro89/dare-db/logger"
+	"github.com/dmarro89/dare-db/logger"
 )
 
 type Server interface {
@@ -23,20 +23,22 @@ type HttpServer struct {
 	httpServer    *http.Server
 	configuration Config
 	sigChan       chan os.Signal
+	logger        *darelog.LOG
 }
 
-func NewHttpServer(dareServer IDare) *HttpServer {
+func NewHttpServer(dareServer IDare, logger *darelog.LOG) *HttpServer {
 	return &HttpServer{
 		dareServer:    dareServer,
 		configuration: NewConfiguration(""),
 		sigChan:       make(chan os.Signal, 1),
+		logger:        logger,
 	}
 }
 
 func (server *HttpServer) Start() {
 
 	if server.configuration.IsSet("log.log_file") {
-		//logger.OpenLogFile(server.configuration.GetString("log.log_file"))
+		server.logger.OpenLogFile(server.configuration.GetString("log.log_file"))
 	}
 
 	server.httpServer = &http.Server{
@@ -45,12 +47,13 @@ func (server *HttpServer) Start() {
 	}
 
 	go func() {
-		//logger.Info("Serving new connections on: %s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port"))
+		server.logger.Info("HttpServer Serving new connections on: %s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port"))
 		if err := server.httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			//logger.Fatal("HTTP server error: %v", err)
+			server.logger.Fatal("HTTP server error: %v", err)
 		}
-		//logger.Info("Stopped serving new connections.")
-		//logger.CloseLogFile()
+		server.logger.Info("HttpServer Stopped serving new connections.")
+		// TODO!FIXME logger should close the logfile
+		//server.logger.CloseLogFile()
 	}()
 
 	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -62,13 +65,14 @@ func (server *HttpServer) Stop() {
 	defer shutdownRelease()
 
 	if err := server.httpServer.Shutdown(shutdownCtx); err != nil {
-		//logger.Fatal("HTTP shutdown error: %v", err)
+		server.logger.Fatal("HttpServer shutdown error: %v", err)
 	}
 
-	//logger.Info("Graceful shutdown complete.")
+	server.logger.Info("HttpServer Graceful shutdown complete.")
 	server.httpServer = nil
 
-	//logger.CloseLogFile()
+	// TODO!FIXME logger should  close the logfile, not each http(s)-server
+	//server.logger.CloseLogFile()
 }
 
 type HttpsServer struct {
@@ -76,13 +80,15 @@ type HttpsServer struct {
 	httpsServer   *http.Server
 	configuration Config
 	sigChan       chan os.Signal
+	logger        *darelog.LOG
 }
 
-func NewHttpsServer(dareServer IDare) *HttpsServer {
+func NewHttpsServer(dareServer IDare, logger *darelog.LOG) *HttpsServer {
 	return &HttpsServer{
 		sigChan:       make(chan os.Signal, 1),
 		configuration: NewConfiguration(""),
 		dareServer:    dareServer,
+		logger:        logger,
 	}
 }
 
@@ -93,14 +99,15 @@ func (server *HttpsServer) Start() {
 	}
 
 	go func() {
-		//logger.Info("Serving new connections on: %s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port"))
-		//logger.Info("Using certificate files. (1) ", server.configuration.GetString("security.cert_private"), " ; (2) ", server.configuration.GetString("security.cert_public"))
+		server.logger.Info("HttpsServer Serving new connections on: %s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port"))
+		server.logger.Info("HttpsServer Using certificate files. (1) ", server.configuration.GetString("security.cert_private"), " ; (2) ", server.configuration.GetString("security.cert_public"))
 
 		if err := server.httpsServer.ListenAndServeTLS(server.configuration.GetString("security.cert_public"), server.configuration.GetString("security.cert_private")); !errors.Is(err, http.ErrServerClosed) {
-			//logger.Fatal("HTTPS server error: ", err)
+			server.logger.Fatal("HTTPS server error: ", err)
 		}
-		//logger.Info("Stopped serving new connections.")
-		//logger.CloseLogFile()
+		server.logger.Info("HttpsServer Stopped serving new connections.")
+		// TODO!FIXME logger should close the logfile
+		//server.logger.CloseLogFile()
 	}()
 
 	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -112,10 +119,11 @@ func (server *HttpsServer) Stop() {
 	defer shutdownRelease()
 
 	if err := server.httpsServer.Shutdown(shutdownCtx); err != nil {
-		//logger.Fatal("HTTP shutdown error: %v", err)
+		server.logger.Fatal("HttpsServer shutdown error: %v", err)
 	}
 
-	//logger.Info("Graceful shutdown complete.")
+	server.logger.Info("HttpsServer Graceful shutdown complete.")
 	server.httpsServer = nil
-	//logger.CloseLogFile()
+	// TODO!FIXME logger should close the logfile
+	//server.logger.CloseLogFile()
 }

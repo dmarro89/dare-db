@@ -14,7 +14,7 @@ func main() {
 	database.Dict.GenerateRandomBytes()
 
 	dareServer := server.NewDareServer(database, darelogger)
-	server := server.NewFactory().GetWebServer(dareServer)
+	server := server.NewFactory().GetWebServer(dareServer, darelogger)
 
 	server.Start()
 	server.Stop()
