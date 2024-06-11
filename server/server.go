@@ -1,96 +1,121 @@
 package server
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/dmarro89/dare-db/database"
+	"github.com/dmarro89/dare-db/logger"
 )
 
-const KEY_PARAM = "key"
-
-type Server struct {
-	db *database.Database
+type Server interface {
+	Start()
+	Stop()
 }
 
-func NewServer(db *database.Database) *Server {
-	return &Server{
-		db: db,
+type HttpServer struct {
+	dareServer    IDare
+	httpServer    *http.Server
+	configuration Config
+	sigChan       chan os.Signal
+}
+
+func NewHttpServer(dareServer IDare) *HttpServer {
+	return &HttpServer{
+		dareServer:    dareServer,
+		configuration: NewConfiguration(""),
+		sigChan:       make(chan os.Signal, 1),
 	}
 }
 
-func (srv *Server) HandlerGet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+func (server *HttpServer) Start() {
+
+	if server.configuration.IsSet("log.log_file") {
+		logger.OpenLogFile(server.configuration.GetString("log.log_file"))
 	}
 
-	key := r.PathValue(KEY_PARAM)
-	if key == "" {
-		http.Error(w, `url path param "key" cannot be empty`, http.StatusBadRequest)
-		return
+	server.httpServer = &http.Server{
+		Addr:    fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
+		Handler: server.dareServer.CreateMux(),
 	}
 
-	val := srv.db.Get(key)
-	if val == nil {
-		http.Error(w, fmt.Sprintf(`Key "%s" not found`, key), http.StatusNotFound)
-		return
-	}
-
-	response, err := json.Marshal(map[string]interface{}{key: val})
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(response)
-
-}
-
-func (srv *Server) HandlerSet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var data map[string]interface{}
-	err := json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
-		http.Error(w, "Invalid JSON format, the body must be in the form of {\"key\": \"value\"}", http.StatusBadRequest)
-		return
-	}
-
-	for key, value := range data {
-		err = srv.db.Set(key, value)
-		if err != nil {
-			http.Error(w, "Error saving data", http.StatusInternalServerError)
-			return
+	go func() {
+		logger.Info("Serving new connections on: ", server.configuration.GetString("server.host"), ":", server.configuration.GetString("server.port"))
+		if err := server.httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			logger.Fatal("HTTP server error: %v", err)
 		}
-	}
+		logger.Info("Stopped serving new connections.")
+		logger.CloseLogFile()
+	}()
 
-	w.WriteHeader(http.StatusCreated)
-
+	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-server.sigChan
 }
 
-func (srv *Server) HandlerDelete(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodDelete {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+func (server *HttpServer) Stop() {
+	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownRelease()
+
+	if err := server.httpServer.Shutdown(shutdownCtx); err != nil {
+		logger.Fatal("HTTP shutdown error:", err)
 	}
 
-	key := r.PathValue(KEY_PARAM)
-	if key == "" {
-		http.Error(w, `url path param "key" cannot be empty`, http.StatusBadRequest)
-		return
+	logger.Info("Graceful shutdown complete.")
+	server.httpServer = nil
+
+	logger.CloseLogFile()
+}
+
+type HttpsServer struct {
+	dareServer    IDare
+	httpsServer   *http.Server
+	configuration Config
+	sigChan       chan os.Signal
+}
+
+func NewHttpsServer(dareServer IDare) *HttpsServer {
+	return &HttpsServer{
+		sigChan:       make(chan os.Signal, 1),
+		configuration: NewConfiguration(""),
+		dareServer:    dareServer,
+	}
+}
+
+func (server *HttpsServer) Start() {
+	server.httpsServer = &http.Server{
+		Addr:    fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
+		Handler: server.dareServer.CreateMux(),
 	}
 
-	err := srv.db.Delete(key)
-	if err != nil {
-		http.Error(w, "Error deleting data", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	go func() {
+		logger.Info("Serving new connections on: ", server.configuration.GetString("server.host"), ":", server.configuration.GetString("server.port"))
+		logger.Info("Using certificate files. (1) ", server.configuration.GetString("security.cert_private"), " ; (2) ", server.configuration.GetString("security.cert_public"))
 
+		if err := server.httpsServer.ListenAndServeTLS(server.configuration.GetString("security.cert_public"), server.configuration.GetString("security.cert_private")); !errors.Is(err, http.ErrServerClosed) {
+			logger.Fatal("HTTPS server error: ", err)
+		}
+		logger.Info("Stopped serving new connections.")
+		logger.CloseLogFile()
+	}()
+
+	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-server.sigChan
+}
+
+func (server *HttpsServer) Stop() {
+	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownRelease()
+
+	if err := server.httpsServer.Shutdown(shutdownCtx); err != nil {
+		logger.Fatal("HTTP shutdown error:", err)
+	}
+
+	logger.Info("Graceful shutdown complete.")
+	server.httpsServer = nil
+	logger.CloseLogFile()
 }
