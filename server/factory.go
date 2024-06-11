@@ -1,7 +1,8 @@
 package server
 
 import (
-	"github.com/spf13/viper"
+	"os"
+	"strconv"
 )
 
 type Factory struct {
@@ -12,6 +13,7 @@ func NewFactory() *Factory {
 }
 
 func (f *Factory) GetWebServer(dareServer IDare) Server {
+
 	if f.getTLSEnabled() {
 		return NewHttpsServer(dareServer)
 	}
@@ -21,5 +23,9 @@ func (f *Factory) GetWebServer(dareServer IDare) Server {
 
 func (f *Factory) getTLSEnabled() bool {
 	//FIXME: pass teh right config to the factory
-	return viper.GetBool("security.tls_enabled")
+	isTLSEnabled, err := strconv.ParseBool(os.Getenv("DARE_TLS_ENABLED"))
+	if err != nil {
+		isTLSEnabled = false
+	}
+	return isTLSEnabled
 }

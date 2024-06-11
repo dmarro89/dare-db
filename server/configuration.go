@@ -36,7 +36,7 @@ func createDirectory(dirPath string) {
 	err := os.MkdirAll(dirPath, 0755)
 	switch {
 	case err == nil:
-		logger.Info("Directory created successfully:", dirPath)
+		logger.Info("Directory created successfully: ", dirPath)
 	case os.IsExist(err):
 		logger.Debug("Directory already exists: ", dirPath)
 	default:
@@ -62,8 +62,8 @@ func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 	c.SetDefault("settings.settings_dir", SETTINGS_DIR)
 
 	c.SetDefault("security.tls_enabled", false)
-	c.SetDefault("security.cert_private", filepath.Join(SETTINGS_DIR, "cert_private"))
-	c.SetDefault("security.cert_public", filepath.Join(SETTINGS_DIR, "cert_public"))
+	c.SetDefault("security.cert_private", filepath.Join(SETTINGS_DIR, "cert_private.pem"))
+	c.SetDefault("security.cert_public", filepath.Join(SETTINGS_DIR, "cert_public.pem"))
 
 	c.WriteConfigAs(cfgFile)
 
@@ -72,21 +72,21 @@ func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 
 func mappingEnvsToConfig() {
 
-	mapsEnvsToConfig["server.host"] = "DAREDB_HOST"
-	mapsEnvsToConfig["server.port"] = "DAREDB_PORT"
-	mapsEnvsToConfig["server.root_user_name"] = "DAREDB_USER"
-	mapsEnvsToConfig["server.root_user_password"] = "DAREDB_PASSWORD"
+	mapsEnvsToConfig["server.host"] = "DARE_HOST"
+	mapsEnvsToConfig["server.port"] = "DARE_PORT"
+	mapsEnvsToConfig["server.admin_user"] = "DARE_USER"
+	mapsEnvsToConfig["server.admin_password"] = "DARE_PASSWORD"
 
-	mapsEnvsToConfig["log.log_level"] = "DAREDB_LOG_LEVEL"
-	mapsEnvsToConfig["log.log_file"] = "DAREDB_LOG_FILE"
+	mapsEnvsToConfig["log.log_level"] = "DARE_LOG_LEVEL"
+	mapsEnvsToConfig["log.log_file"] = "DARE_LOG_FILE"
 
-	mapsEnvsToConfig["settings.data_dir"] = "DAREDB_DATA_DIR"
-	mapsEnvsToConfig["settings.base_dir"] = "DAREDB_BASE_DIR"
-	mapsEnvsToConfig["settings.settings_dir"] = "DAREDB_SETTINGS_DIR"
+	mapsEnvsToConfig["settings.data_dir"] = "DARE_DATA_DIR"
+	mapsEnvsToConfig["settings.base_dir"] = "DARE_BASE_DIR"
+	mapsEnvsToConfig["settings.settings_dir"] = "DARE_SETTINGS_DIR"
 
 	mapsEnvsToConfig["security.tls_enabled"] = "DARE_TLS_ENABLED"
-	mapsEnvsToConfig["security.cert_private"] = "DAREDB_CERT_PRIVATE"
-	mapsEnvsToConfig["security.cert_public"] = "DAREDB_CERT_PUBLIC"
+	mapsEnvsToConfig["security.cert_private"] = "DARE_CERT_PRIVATE"
+	mapsEnvsToConfig["security.cert_public"] = "DARE_CERT_PUBLIC"
 }
 
 func reReadConfigsFromEnvs(c *viper.Viper) {
@@ -94,6 +94,7 @@ func reReadConfigsFromEnvs(c *viper.Viper) {
 	for key, value := range mapsEnvsToConfig {
 		valueFromEnv, ok := os.LookupEnv(value)
 		if ok {
+			logger.Info("Use new configuration value from environmental variable for: ", key)
 			fmt.Println(key, valueFromEnv)
 			c.Set(key, valueFromEnv)
 		}
@@ -106,16 +107,16 @@ func initDBDirectories(c *viper.Viper) {
 	if err != nil {
 		logger.Error("Error in getting current working directory:", err)
 	}
-	os.Setenv("DAREDB_BASE_DIR", dbBaseDir)
+	os.Setenv("DARE_BASE_DIR", dbBaseDir)
 
 	createDirectory(filepath.Join(dbBaseDir, SETTINGS_DIR))
 	createDirectory(filepath.Join(dbBaseDir, c.GetString("settings.data_dir")))
 }
 
-func PrintConfigsToConsole() {
+func PrintConfigsToConsole(c *viper.Viper) {
 	fmt.Printf("Print all configs that were set\n")
 	for key, _ := range mapsEnvsToConfig {
-		fmt.Printf("Config value for for %v is: %v\n", key, viper.Get(key))
+		fmt.Printf("Config value for for %v is: %v\n", key, c.Get(key))
 	}
 }
 
@@ -151,6 +152,7 @@ func NewConfiguration(cfgFile string) Config {
 
 	reReadConfigsFromEnvs(v)
 	initDBDirectories(v)
+	//PrintConfigsToConsole(v)
 	return &ViperConfig{v}
 }
 
