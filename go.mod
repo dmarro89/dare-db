@@ -3,7 +3,7 @@ module github.com/dmarro89/dare-db
 go 1.22.3
 
 require (
-	github.com/dmarro89/go-redis-hashtable v0.0.3
+	github.com/dmarro89/go-redis-hashtable v0.0.4
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
