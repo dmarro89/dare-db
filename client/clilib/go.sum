@@ -80,3 +80,7 @@ github.com/go-while/nodare-db/logger v0.0.0-20240612201230-44fbbd523cbd h1:CbOWU
 github.com/go-while/nodare-db/logger v0.0.0-20240612201230-44fbbd523cbd/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
 github.com/go-while/nodare-db/logger v0.0.0-20240612211705-5c827eb7bcf1 h1:iY9GmIT5kybIgSeCD2t8AKoJLBLUYpQV+yWUcO93lRI=
 github.com/go-while/nodare-db/logger v0.0.0-20240612211705-5c827eb7bcf1/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
+github.com/go-while/nodare-db/logger v0.0.0-20240612212036-f1e38d7c3c5b h1:SLjY8WfbsCludtlQvzcvrOM/Shg3qaeD0uIAcNBzNUk=
+github.com/go-while/nodare-db/logger v0.0.0-20240612212036-f1e38d7c3c5b/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
+github.com/go-while/nodare-db/logger v0.0.0-20240612214003-da08c928fa23 h1:FTzY6N9pUFbR38eqt3vb+eRo8U6SSuTy3aHiLKC8YrA=
+github.com/go-while/nodare-db/logger v0.0.0-20240612214003-da08c928fa23/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=

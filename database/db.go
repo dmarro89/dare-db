@@ -15,15 +15,15 @@ func NewDICK(logger *ilog.LOG, sdCh chan uint32, waitCh chan struct{}) *XDatabas
 	db := &XDatabase{
 		XDICK: xdick,
 	}
-	go func(returnsubDICKs <- chan []*SubDICK, db *XDatabase) {
+	go func(returnsubDICKs <-chan []*SubDICK, db *XDatabase) {
 		db.XDICK.logger.Debug("NewDICK waits async to return subDICKs")
-		subDICKs := <- returnsubDICKs
+		subDICKs := <-returnsubDICKs
 
 		db.XDICK.SubDICKs = subDICKs
 
 		// reads re-pushed value from NewXDICK
 		// which has been read from config and passed through sdCh
-		db.XDICK.SubCount = <- sdCh
+		db.XDICK.SubCount = <-sdCh
 
 		for j := range db.XDICK.SubDICKs {
 			go db.XDICK.watchDog(uint32(j))

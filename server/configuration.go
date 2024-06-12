@@ -13,7 +13,7 @@ import (
 	"log"
 )
 
-var AVAIL_SUBDICKS = []uint32{10,100,1000,10000,100000,1000000}
+var AVAIL_SUBDICKS = []uint32{10, 100, 1000, 10000, 100000, 1000000}
 
 type Config interface {
 	Get(key string) interface{}
@@ -76,7 +76,6 @@ func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 	c.SetDefault("network.websrv_read_timeout", 5)
 	c.SetDefault("network.websrv_write_timeout", 10)
 	c.SetDefault("network.websrv_idle_timeout", 120)
-
 
 	c.WriteConfigAs(cfgFile)
 

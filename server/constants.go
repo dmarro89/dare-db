@@ -1,6 +1,9 @@
 package server
 
-import "github.com/go-while/nodare-db/logger"
+import (
+	"github.com/go-while/go-cpu-mem-profiler"
+	"github.com/go-while/nodare-db/logger"
+)
 
 const DEFAULT_PW_LEN = 32 // admin/username:password
 const DEFAULT_ADMIN = "superadmin"
@@ -20,3 +23,17 @@ const DEFAULT_SERVER_UDP_PORT_STR = "2240"
 const DEFAULT_TLS_PRIVKEY = "privkey.pem"
 const DEFAULT_TLS_PUBCERT = "fullchain.pem"
 
+const EmptyStr = ""
+const CaseAdded = 0x69
+const CaseDupes = 0xB8
+const CaseDeleted = 0x00
+const CasePass = 0xFF
+const FlagSearch = 0x42
+
+const no_mode = 0x00
+const modeADD = 0x11
+const modeGET = 0x22
+const modeSET = 0x33
+const modeDEL = 0x44
+
+var Prof *prof.Profiler

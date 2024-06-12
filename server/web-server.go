@@ -26,7 +26,7 @@ type HttpServer struct {
 }
 
 type HttpsServer struct {
-	ndbServer    WebMux
+	ndbServer     WebMux
 	httpsServer   *http.Server
 	configuration Config
 	sigChan       chan os.Signal
@@ -36,7 +36,7 @@ type HttpsServer struct {
 func NewHttpServer(ndbServer WebMux, logger *ilog.LOG) (srv *HttpServer, sub_dicks uint32) {
 	cfg, sub_dicks := NewConfiguration("")
 	srv = &HttpServer{
-		ndbServer:    ndbServer,
+		ndbServer:     ndbServer,
 		configuration: cfg,
 		sigChan:       make(chan os.Signal, 1),
 		logger:        logger,
@@ -49,7 +49,7 @@ func NewHttpsServer(ndbServer WebMux, logger *ilog.LOG) (srv *HttpsServer, sub_d
 	srv = &HttpsServer{
 		sigChan:       make(chan os.Signal, 1),
 		configuration: cfg,
-		ndbServer:    ndbServer,
+		ndbServer:     ndbServer,
 		logger:        logger,
 	}
 	return

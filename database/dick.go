@@ -14,17 +14,17 @@ import (
 )
 
 const (
-	INITIAL_SIZE   = int64(128)
-	MAX_SIZE       = 1 << 63
-	HASH_siphash   = 0xFF
-	HASH_FNV32A    = 0x32A
-	HASH_FNV64A    = 0x64A
+	INITIAL_SIZE = int64(128)
+	MAX_SIZE     = 1 << 63
+	HASH_siphash = 0xFF
+	HASH_FNV32A  = 0x32A
+	HASH_FNV64A  = 0x64A
 )
 
 // experiment! MOD can be 10, 100, 1000, 10000
-//const DEFAULT_SUBDICKS uint32 = 10
-//var AVAIL_SUBDICKS = []uint32{10,100,1000,10000,100000,1000000}
-//var USE_SUBDICKS = DEFAULT_SUBDICKS
+// const DEFAULT_SUBDICKS uint32 = 10
+// var AVAIL_SUBDICKS = []uint32{10,100,1000,10000,100000,1000000}
+// var USE_SUBDICKS = DEFAULT_SUBDICKS
 var key0, key1 uint64
 var once sync.Once
 var SALT [16]byte
@@ -32,7 +32,7 @@ var HASHER = HASH_siphash
 
 type XDICK struct {
 	//hashmode     int // mode of hashing
-	mainmux  sync.RWMutex  // not used anywhere but exists for whatever reason we may find
+	mainmux sync.RWMutex // not used anywhere but exists for whatever reason we may find
 	//SubDICKs [DEFAULT_SUBDICKS]*SubDICK
 	SubDICKs []*SubDICK
 	SubCount uint32
@@ -57,8 +57,8 @@ func NewXDICK(logger *ilog.LOG, sdCh chan uint32, returnsubDICKs chan []*SubDICK
 
 	go func(sdCh chan uint32, returnsubDICKs chan []*SubDICK) {
 		logger.Info("NewXDICK: creating SubDICKs waits async for configs to load!")
-		sub_dicks := <- sdCh // after NewFactory waits for sub_dicks
-		sdCh <- sub_dicks // re-push in so NewDICK() can set SubCount
+		sub_dicks := <-sdCh // after NewFactory waits for sub_dicks
+		sdCh <- sub_dicks   // re-push in so NewDICK() can set SubCount
 		created := 0
 		var subDICKs []*SubDICK
 		for i := uint32(0); i < sub_dicks; i++ {
@@ -162,19 +162,19 @@ func (d *XDICK) split(key [16]byte) (uint64, uint64) {
 // main hasher func
 func (d *XDICK) hasher(any string) uint64 {
 	switch HASHER {
-		case HASH_siphash:
-			// sipHashDigest calculates the SipHash-2-4 digest of the given message using the provided key.
-			return siphash.Hash(key0, key1, []byte(any))
+	case HASH_siphash:
+		// sipHashDigest calculates the SipHash-2-4 digest of the given message using the provided key.
+		return siphash.Hash(key0, key1, []byte(any))
 
-		case HASH_FNV32A:
-			hash := fnv.New32a()
-			hash.Write([]byte(any))
-			return uint64(hash.Sum32())
+	case HASH_FNV32A:
+		hash := fnv.New32a()
+		hash.Write([]byte(any))
+		return uint64(hash.Sum32())
 
-		case HASH_FNV64A:
-			hash := fnv.New64a()
-			hash.Write([]byte(any))
-			return hash.Sum64()
+	case HASH_FNV64A:
+		hash := fnv.New64a()
+		hash.Write([]byte(any))
+		return hash.Sum64()
 	}
 	d.logger.Fatal("No HASHER defined! HASHER=%d %x", HASHER, HASHER)
 	os.Exit(1)
@@ -401,7 +401,7 @@ func (d *XDICK) watchDog(idx uint32) {
 	//log.Printf("Booted Watchdog [%d]", idx)
 
 	for {
-		time.Sleep(time.Second)  // TODO!FIXME setting: watchdog_timer
+		time.Sleep(time.Second) // TODO!FIXME setting: watchdog_timer
 
 		if d == nil || d.SubCount == 0 || d.SubDICKs[idx] == nil {
 			// not finished booting
@@ -430,7 +430,6 @@ func (d *XDICK) watchDog(idx uint32) {
 		//d.logger.Debug("watchDog [%d] SubDICKs='\n   ---> %#v", idx, d.SubDICKs[idx])
 	}
 } // end func watchDog
-
 
 // GenerateSALT generates a fixed slice of 16 maybe NOT really random bytes
 func (d *XDICK) GenerateSALT() {

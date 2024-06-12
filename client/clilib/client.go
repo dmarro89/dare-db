@@ -10,8 +10,8 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"time"
 	"sync"
+	"time"
 )
 
 const DefaultAddr = "localhost:2420"
@@ -45,7 +45,6 @@ type Client struct {
 	testWorker bool
 	conn       net.Conn
 	http       *http.Client
-
 }
 
 func NewClient(opts *Options) (*Client, error) {
@@ -73,51 +72,51 @@ func (c *Client) Connect(client *Client) (*Client, error) {
 		return client, nil
 	}
 	switch client.mode {
-		case 1:
-			c.Transport() // FIXME catch error!
+	case 1:
+		c.Transport() // FIXME catch error!
 
-		case 2:
-			switch c.ssl {
-				case true:
-					if c.addr == "" {
-						c.addr = DefaultAddrSSL
-					}
-					conf := &tls.Config{
-						InsecureSkipVerify: c.insecure,
-						MinVersion:         tls.VersionTLS12,
-						CurvePreferences: []tls.CurveID{
-							tls.CurveP521,
-							tls.CurveP384,
-							tls.CurveP256},
-						PreferServerCipherSuites: true,
-						CipherSuites: []uint16{
-							tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-							//tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-							//tls.TLS_AES_256_GCM_SHA384,
-							//tls.TLS_AES_128_GCM_SHA256,
-						},
-					}
-					c.logger.Info("client connecting to tls://'%s'", c.addr)
-					conn, err := tls.Dial("tcp", c.addr, conf)
-					if err != nil {
-						c.logger.Error("client.Connect tls.Dial err='%v'", err)
-						return nil, err
-					}
-					c.conn = conn
-				case false:
-					if c.addr == "" {
-						c.addr = DefaultAddr
-					}
-					c.logger.Info("client connecting to tcp://'%s'", c.addr)
-					conn, err := net.Dial("tcp", c.addr)
-					if err != nil {
-						c.logger.Error("client.Connect net.Dial err='%v'", err)
-						return nil, err
-					}
-					c.conn = conn
-			} // end switch c.ssl
-		default:
-			c.logger.Error("client invalid mode=%d", c.mode)
+	case 2:
+		switch c.ssl {
+		case true:
+			if c.addr == "" {
+				c.addr = DefaultAddrSSL
+			}
+			conf := &tls.Config{
+				InsecureSkipVerify: c.insecure,
+				MinVersion:         tls.VersionTLS12,
+				CurvePreferences: []tls.CurveID{
+					tls.CurveP521,
+					tls.CurveP384,
+					tls.CurveP256},
+				PreferServerCipherSuites: true,
+				CipherSuites: []uint16{
+					tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+					//tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+					//tls.TLS_AES_256_GCM_SHA384,
+					//tls.TLS_AES_128_GCM_SHA256,
+				},
+			}
+			c.logger.Info("client connecting to tls://'%s'", c.addr)
+			conn, err := tls.Dial("tcp", c.addr, conf)
+			if err != nil {
+				c.logger.Error("client.Connect tls.Dial err='%v'", err)
+				return nil, err
+			}
+			c.conn = conn
+		case false:
+			if c.addr == "" {
+				c.addr = DefaultAddr
+			}
+			c.logger.Info("client connecting to tcp://'%s'", c.addr)
+			conn, err := net.Dial("tcp", c.addr)
+			if err != nil {
+				c.logger.Error("client.Connect net.Dial err='%v'", err)
+				return nil, err
+			}
+			c.conn = conn
+		} // end switch c.ssl
+	default:
+		c.logger.Error("client invalid mode=%d", c.mode)
 	}
 	c.logger.Info("client established c.conn='%v' c.http='%v' mode=%d", c.conn, c.http, c.mode)
 
@@ -158,7 +157,7 @@ func (c *Client) Transport() {
 func (c *Client) Get(key string) (string, error) {
 	c.mux.Lock() // we lock so nobody else can use the connection at the same time
 	defer c.mux.Unlock()
-	resp, err := c.http.Get(c.url+"/get/" + key)
+	resp, err := c.http.Get(c.url + "/get/" + key)
 	if err != nil {
 		c.logger.Error("c.http.Get err='%v'", err)
 		return "", err
@@ -198,7 +197,7 @@ func (c *Client) Set(key string, value string) (string, error) {
 func (c *Client) Del(key string) (string, error) {
 	c.mux.Lock() // we lock so nobody else can use the connection at the same time
 	defer c.mux.Unlock()
-	resp, err := c.http.Get(c.url+"/del/" + key)
+	resp, err := c.http.Get(c.url + "/del/" + key)
 	//resp, err := c.http.Get(c.url+"/del/" + key)
 	if err != nil {
 		c.logger.Error("c.http.Del err='%v'", err)

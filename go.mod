@@ -4,12 +4,14 @@ go 1.22.4
 
 require (
 	github.com/dchest/siphash v1.2.3
-	github.com/go-while/nodare-db/logger v0.0.0-20240612211705-5c827eb7bcf1
+	github.com/go-while/go-cpu-mem-profiler v0.0.0-20240612221627-856954a5fc83
+	github.com/go-while/nodare-db/logger v0.0.0-20240612214003-da08c928fa23
 	github.com/spf13/viper v1.19.0
 )
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
