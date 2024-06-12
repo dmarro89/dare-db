@@ -4,7 +4,7 @@ go 1.22.4
 
 require (
 	github.com/dchest/siphash v1.2.3
-	github.com/go-while/nodare-db/logger v0.0.0-20240612201230-44fbbd523cbd
+	github.com/go-while/nodare-db/logger v0.0.0-20240612211705-5c827eb7bcf1
 	github.com/spf13/viper v1.19.0
 )
 

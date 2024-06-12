@@ -78,6 +78,8 @@ github.com/go-while/nodare-db/client/clilib v0.0.0-20240612192735-0c17a2e5b931 h
 github.com/go-while/nodare-db/client/clilib v0.0.0-20240612192735-0c17a2e5b931/go.mod h1:f59TNBXEZy865ZYB9LW+t8ZX0BDrwuuJor223SWlcUI=
 github.com/go-while/nodare-db/client/clilib v0.0.0-20240612201230-44fbbd523cbd h1:4ECOy5lAQpPltJKNeG30YGEzIJRMs4RSip0LPjoTRrY=
 github.com/go-while/nodare-db/client/clilib v0.0.0-20240612201230-44fbbd523cbd/go.mod h1:7b1TKRBuccN5SXSM1ZMIWC9gMqj6E7UZLhXHIy/LhYQ=
+github.com/go-while/nodare-db/client/clilib v0.0.0-20240612211705-5c827eb7bcf1 h1:s9txdI7tV/tKzcBwZJ7u/qFQ/5qCI6stfNgzKRcpVrk=
+github.com/go-while/nodare-db/client/clilib v0.0.0-20240612211705-5c827eb7bcf1/go.mod h1:qQnJ7iRvTJPemfyWcse62KwfnQ4ZWe2q7budi0gf+sc=
 github.com/go-while/nodare-db/logger v0.0.0-20240612165319-5338b1d6fff8 h1:CEpkSBhoLpB5CrJ/5b+R6vKMKT5UiouZssdqCds3JNA=
 github.com/go-while/nodare-db/logger v0.0.0-20240612165319-5338b1d6fff8/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
 github.com/go-while/nodare-db/logger v0.0.0-20240612165643-f140a0b16c16 h1:mRW+y2uxnUR0JCIYrMQHx/qgZTYan6jZv2WZYy1IrlE=
@@ -158,3 +160,5 @@ github.com/go-while/nodare-db/logger v0.0.0-20240612192735-0c17a2e5b931 h1:H+LBI
 github.com/go-while/nodare-db/logger v0.0.0-20240612192735-0c17a2e5b931/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
 github.com/go-while/nodare-db/logger v0.0.0-20240612201230-44fbbd523cbd h1:CbOWU9MdsVEcPzjpz5pSaimFnjto59ZXJYAfKsVTWSA=
 github.com/go-while/nodare-db/logger v0.0.0-20240612201230-44fbbd523cbd/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
+github.com/go-while/nodare-db/logger v0.0.0-20240612211705-5c827eb7bcf1 h1:iY9GmIT5kybIgSeCD2t8AKoJLBLUYpQV+yWUcO93lRI=
+github.com/go-while/nodare-db/logger v0.0.0-20240612211705-5c827eb7bcf1/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
