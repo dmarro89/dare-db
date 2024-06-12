@@ -66,14 +66,14 @@ Example usage with cURL:
 curl -X POST -d '{"myKey":"myValue"}' http://localhost:2420/set
 ```
 
-### DELETE /delete/{key}
+### DELETE /del/{key}
 
 This endpoint deletes an item from the hashtable using a specific key.
 
 Example usage with cURL:
 
 ```bash
-curl -X DELETE http://localhost:2420/delete/myKey
+curl -X GET http://localhost:2420/del/myKey
 ```
 
 
