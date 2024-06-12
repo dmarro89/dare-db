@@ -5,17 +5,17 @@ package database
 import (
 	"sync"
 
-	"github.com/dmarro89/go-redis-hashtable/datastr"
+	"github.com/dmarro89/go-redis-hashtable/structure"
 )
 
 type Database struct {
-	dict *datastr.Dict
+	dict structure.IDict
 	mu   sync.RWMutex
 }
 
 func NewDatabase() *Database {
 	return &Database{
-		dict: datastr.NewDict(),
+		dict: structure.NewSipHashDict(),
 	}
 }
 
