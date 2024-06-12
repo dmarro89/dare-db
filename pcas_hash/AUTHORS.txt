@@ -1,0 +1,4 @@
+Authors, in alphabetical order by last name:
+    
+Tom Coates <t.coates@imperial.ac.uk>
+Alexander Kasprzyk <a.m.kasprzyk@nottingham.ac.uk>

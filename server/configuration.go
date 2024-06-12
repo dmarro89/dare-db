@@ -8,15 +8,18 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/dmarro89/dare-db/logger"
-	"github.com/dmarro89/dare-db/utils"
-
+	"github.com/go-while/nodare-db/utils"
 	"github.com/spf13/viper"
+	"log"
 )
+
+var AVAIL_SUBDICKS = []uint32{10,100,1000,10000,100000,1000000}
 
 type Config interface {
 	Get(key string) interface{}
 	GetString(key string) string
+	GetInt(key string) int
+	GetUint32(key string) uint32
 	GetBool(key string) bool
 	IsSet(key string) bool
 }
@@ -36,113 +39,139 @@ func createDirectory(dirPath string) {
 	err := os.MkdirAll(dirPath, 0755)
 	switch {
 	case err == nil:
-		logger.Info("Directory created successfully: ", dirPath)
+		log.Printf("Directory created successfully: %s", dirPath) // info
 	case os.IsExist(err):
-		logger.Debug("Directory already exists: ", dirPath)
+		log.Printf("Directory already exists: %s", dirPath) // debug
 	default:
-		logger.Error("Error creating directory:", err)
+		log.Printf("Error creating directory: %v", err) // error
 	}
 }
 
 func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 
-	var passwordNew string = utils.GenerateRandomString(12)
+	log.Printf("Creating default configuration file")
+	adminuser := DEFAULT_ADMIN
+	adminpass := utils.GenerateRandomString(DEFAULT_PW_LEN)
 
-	logger.Info("Creating default configuration file")
+	c.SetDefault("server.host", DEFAULT_SERVER_ADDR_STR)
+	c.SetDefault("server.port", DEFAULT_SERVER_TCP_PORT_STR)
+	c.SetDefault("server.port_udp", DEFAULT_SERVER_UDP_PORT_STR)
+	c.SetDefault("server.admin_user", adminuser)
+	c.SetDefault("server.admin_password", adminpass)
 
-	c.SetDefault("server.host", "127.0.0.1")
-	c.SetDefault("server.port", "2605")
-	c.SetDefault("server.admin_user", "admin")
-	c.SetDefault("server.admin_password", passwordNew)
+	c.SetDefault("log.log_level", DEFAULT_LOGLEVEL_STRING)
+	c.SetDefault("log.log_file", DEFAULT_LOG_FILE)
 
-	c.SetDefault("log.log_level", "INFO")
-	c.SetDefault("log.log_file", "daredb.log")
-
+	c.SetDefault("settings.base_dir", ".")
 	c.SetDefault("settings.data_dir", DATA_DIR)
-	c.SetDefault("settings.settings_dir", SETTINGS_DIR)
+	c.SetDefault("settings.settings_dir", CONFIG_DIR)
+	c.SetDefault("settings.sub_dicks", "1000")
 
 	c.SetDefault("security.tls_enabled", false)
-	c.SetDefault("security.cert_private", filepath.Join(SETTINGS_DIR, "cert_private.pem"))
-	c.SetDefault("security.cert_public", filepath.Join(SETTINGS_DIR, "cert_public.pem"))
+	// /etc/letsencrypt/live/(sub.)domain.com/fullchain.pem
+	c.SetDefault("security.tls_cert_private", filepath.Join(CONFIG_DIR, DEFAULT_TLS_PUBCERT))
+	// /etc/letsencrypt/live/(sub.)domain.com/privkey.pem
+	c.SetDefault("security.tls_cert_public", filepath.Join(CONFIG_DIR, DEFAULT_TLS_PRIVKEY))
+
+	c.SetDefault("network.websrv_read_timeout", 5)
+	c.SetDefault("network.websrv_write_timeout", 10)
+	c.SetDefault("network.websrv_idle_timeout", 120)
+
 
 	c.WriteConfigAs(cfgFile)
 
-	fmt.Printf("\nIMPORTANT! Generate default password for admin on initial start. Store it securely. Password: %v\n\n", passwordNew)
+	fmt.Printf("\nIMPORTANT! Generated ADMIN credentials! \n admin login: '%s' password: %s\n\n", adminuser, adminpass)
 }
 
 func mappingEnvsToConfig() {
 
-	mapsEnvsToConfig["server.host"] = "DARE_HOST"
-	mapsEnvsToConfig["server.port"] = "DARE_PORT"
-	mapsEnvsToConfig["server.admin_user"] = "DARE_USER"
-	mapsEnvsToConfig["server.admin_password"] = "DARE_PASSWORD"
+	mapsEnvsToConfig["server.host"] = "NDB_HOST"
+	mapsEnvsToConfig["server.port"] = "NDB_PORT"
+	mapsEnvsToConfig["server.admin_user"] = "NDB_USER"
+	mapsEnvsToConfig["server.admin_password"] = "NDB_PASSWORD"
 
-	mapsEnvsToConfig["log.log_level"] = "DARE_LOG_LEVEL"
-	mapsEnvsToConfig["log.log_file"] = "DARE_LOG_FILE"
+	mapsEnvsToConfig["log.log_level"] = "LOGLEVEL"
+	mapsEnvsToConfig["log.log_file"] = "LOG_FILE"
 
-	mapsEnvsToConfig["settings.data_dir"] = "DARE_DATA_DIR"
-	mapsEnvsToConfig["settings.base_dir"] = "DARE_BASE_DIR"
-	mapsEnvsToConfig["settings.settings_dir"] = "DARE_SETTINGS_DIR"
+	mapsEnvsToConfig["settings.base_dir"] = "NDB_BASE_DIR"
+	mapsEnvsToConfig["settings.data_dir"] = "NDB_DATA_DIR"
+	mapsEnvsToConfig["settings.settings_dir"] = "NDB_CONFIG_DIR"
+	mapsEnvsToConfig["settings.sub_dicks"] = "NDB_SUB_DICKS"
 
-	mapsEnvsToConfig["security.tls_enabled"] = "DARE_TLS_ENABLED"
-	mapsEnvsToConfig["security.cert_private"] = "DARE_CERT_PRIVATE"
-	mapsEnvsToConfig["security.cert_public"] = "DARE_CERT_PUBLIC"
+	mapsEnvsToConfig["security.tls_enabled"] = "NDB_TLS_ENABLED"
+	mapsEnvsToConfig["security.tls_cert_private"] = "NDB_TLS_KEY"
+	mapsEnvsToConfig["security.tls_cert_public"] = "NDB_TLS_CRT"
+
+	mapsEnvsToConfig["network.websrv_read_timeout"] = "NDB_WEBSRV_READ_TIMEOUT"
+	mapsEnvsToConfig["network.websrv_write_timeout"] = "NDB_WEBSRV_WRITE_TIMEOUT"
+	mapsEnvsToConfig["network.websrv_idle_timeout"] = "NDB_WEBSRV_IDLE_TIMEOUT"
 }
 
-func reReadConfigsFromEnvs(c *viper.Viper) {
-	logger.Info("Re-reading configurations from environmental variables")
+func ReadConfigsFromEnvs(c *viper.Viper) {
+	log.Printf("READ ENV VARS")
 	for key, value := range mapsEnvsToConfig {
 		valueFromEnv, ok := os.LookupEnv(value)
 		if ok {
-			logger.Info("Use new configuration value from environmental variable for: ", key)
-			fmt.Println(key, valueFromEnv)
+			log.Printf("GOT NEW ENV key='%s' value='%v'", key, valueFromEnv)
 			c.Set(key, valueFromEnv)
+		} else {
+			log.Printf("NO ENV: key='%s' val='%s' !ok", key, valueFromEnv)
 		}
 	}
 }
 
-func initDBDirectories(c *viper.Viper) {
+func initDB(c *viper.Viper) (sub_dicks uint32) {
 
 	dbBaseDir, err := os.Getwd()
 	if err != nil {
-		logger.Error("Error in getting current working directory:", err)
+		log.Fatalf("Error in getting current working directory: %v", err)
 	}
-	os.Setenv("DARE_BASE_DIR", dbBaseDir)
+	os.Setenv("NDB_BASE_DIR", dbBaseDir)
 
-	createDirectory(filepath.Join(dbBaseDir, SETTINGS_DIR))
+	createDirectory(filepath.Join(dbBaseDir, CONFIG_DIR))
 	createDirectory(filepath.Join(dbBaseDir, c.GetString("settings.data_dir")))
-}
+
+	setSUBDICKS := c.GetUint32("settings.sub_dicks")
+	for _, v := range AVAIL_SUBDICKS {
+		if setSUBDICKS == v {
+			sub_dicks = setSUBDICKS
+			return
+		}
+	}
+	// reached here we did not get a valid sub_dicks value from config
+	// always return at least 10 so we don't fail
+	log.Printf("WARN invalid sub_dicks value=%d !! defaulted to 1000", setSUBDICKS)
+	return 1000
+} // end func initDB
 
 func PrintConfigsToConsole(c *viper.Viper) {
 	fmt.Printf("Print all configs that were set\n")
 	for key, _ := range mapsEnvsToConfig {
-		fmt.Printf("Config value for for %v is: %v\n", key, c.Get(key))
+		fmt.Printf("Config value '%v': '%v'\n", key, c.Get(key))
 	}
 }
 
-func NewConfiguration(cfgFile string) Config {
+func NewConfiguration(cfgFile string) (Config, uint32) {
 	v := viper.New()
 	mappingEnvsToConfig()
 	v.SetConfigType("toml")
 
 	if len(strings.TrimSpace(cfgFile)) == 0 {
-		logger.Info("No configuration file was supplied. Using default value: ", DEFAULT_CONFIG_FILE)
+		log.Printf("No configuration file in '%s' was supplied. Using default value: %s", cfgFile, DEFAULT_CONFIG_FILE)
 		cfgFile = DEFAULT_CONFIG_FILE
 	}
 
-	isFileExist := checkFileExists(cfgFile)
-
-	if !isFileExist {
-		logger.Info("Configuration file does not exist: ", cfgFile)
+	if !checkFileExists(cfgFile) {
+		log.Printf("Configuration file does not exist: %s", cfgFile)
 		createDefaultConfigFile(v, cfgFile)
 	}
 
-	logger.Info("Using configuration file: ", cfgFile)
+	log.Printf("Using configuration file: %s", cfgFile)
 
 	v.SetConfigFile(cfgFile)
 
 	if err := v.ReadInConfig(); err != nil {
-		logger.Fatal("Error reading config file:", err)
+		log.Fatalf("Error reading config file: %v", err)
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			panic("Config file was not found")
 		} else {
@@ -150,10 +179,10 @@ func NewConfiguration(cfgFile string) Config {
 		}
 	}
 
-	reReadConfigsFromEnvs(v)
-	initDBDirectories(v)
-	//PrintConfigsToConsole(v)
-	return &ViperConfig{v}
+	ReadConfigsFromEnvs(v)
+	sub_dicks := initDB(v)
+	PrintConfigsToConsole(v)
+	return &ViperConfig{v}, sub_dicks
 }
 
 func (c *ViperConfig) Get(key string) interface{} {

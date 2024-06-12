@@ -1,0 +1,18 @@
+[log]
+log_file = 'daredb.log'
+log_level = 'INFO'
+
+[security]
+cert_private = 'settings/cert_private.pem'
+cert_public = 'settings/cert_public.pem'
+tls_enabled = false
+
+[server]
+admin_password = 'AAAAAAAAAAAAAAAAAA'
+admin_user = 'admin'
+host = '127.0.0.1'
+port = '2605'
+
+[settings]
+data_dir = 'data'
+settings_dir = 'settings'

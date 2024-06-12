@@ -1,13 +1,6 @@
 MIT License
 
-Copyright (c) 2024-06-12 github.com/go-while
-
-Forked 2024-06-12:
-    Copyright (c) 2024 Davide Marro
-    source: github.com/dmarro89/dare-db
-
-Party Imports:
-    source: github.com/dmarro89/go-redis-hashtable
+Copyright (c) 2024 go-while
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
