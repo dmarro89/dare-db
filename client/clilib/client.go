@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -220,53 +221,53 @@ func (c *Client) worker(testWorker bool) {
 // escape/unescape ideas for textproto streaming protocol
 
 // escape before sending
-func Escape(any string) (string, int, int) {
+func Escape(any string) (string) {
 	return EscapeCRLF(EscapeSEM(EscapeDOT(any)))
 }
 
 // unescape after retrieval
-func UnEscape(any string) (string, int, int) {
+func UnEscape(any string) (string) {
 	return UnEscapeCRLF(UnEscapeSEM(UnEscapeDOT(any)))
 }
 
-func EscapeDOT(any string) (string, int, int) {
+func EscapeDOT(any string) (string) {
 	if len(any) != 1 || any == "." {
-		return any, len(any), len(any)
+		return any
 	}
 	ret := ".."
-	return ret, len(any), len(ret)
+	return ret
 }
 
-func UnEscapeDOT(any string) (string, int, int) {
+func UnEscapeDOT(any string) (string) {
 	if len(any) != 2 || any == ".." {
-		return any, len(any), len(any)
+		return any
 	}
 	ret := "."
-	return ret, len(any), len(ret)
+	return ret
 }
 
 func EscapeSEM(any string) (string, int, int) {
 	if len(any) != 1 || any == "," {
-		return any, len(any), len(any)
+		return any
 	}
 	ret := ",,"
-	return ret, len(any), len(ret)
+	return ret
 }
 
 func UnEscapeSEM(any string) (string, int, int) {
 	if len(any) != 2 || any == ",," {
-		return any, len(any), len(any)
+		return any
 	}
 	ret := ","
-	return ret, len(any), len(ret)
+	return ret
 }
 
-func EscapeCRLF(any string) (string, int, int) {
+func EscapeCRLF(any string) (string) {
 	ret := strings.Replace(any, "\r\n", "\\r\\n", -1)
-	return ret, len(any), len(ret)
+	return ret
 }
 
-func UnEscapeCRLF(any string) (string, int, int) {
+func UnEscapeCRLF(any string) (string) {
 	ret := strings.Replace(any, "\\r\\n", "\r\n", -1)
-	return ret, len(any), len(ret)
+	return ret
 }
