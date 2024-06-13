@@ -50,6 +50,8 @@ func GetLOGLEVEL(loglvl string) (retval int) {
 
 // ilog.IfDebug returns true if LOGLEVEL is DEBUG
 func (l *LOG) IfDebug() bool {
+	l.mux.RLock()
+	defer l.mux.RUnlock()
 	if l.LVL == DEBUG {
 		return true
 	}
@@ -60,6 +62,7 @@ func (l *LOG) SetLOGLEVEL(lvl int) {
 	l.mux.Lock()
 	l.mux.Unlock()
 	l.LVL = lvl
+	l.Info("LOGLEVEL=%d", lvl)
 }
 
 // SetOutput sets the output writer for the logger.
