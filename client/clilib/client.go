@@ -216,3 +216,57 @@ func (c *Client) Del(key string) (string, error) {
 func (c *Client) worker(testWorker bool) {
 	defer c.logger.Info("worker left")
 }
+
+// escape/unescape ideas for textproto streaming protocol
+
+// escape before sending
+func Escape(any string) (string, int, int) {
+	return EscapeCRLF(EscapeSEM(EscapeDOT(any)))
+}
+
+// unescape after retrieval
+func UnEscape(any string) (string, int, int) {
+	return UnEscapeCRLF(UnEscapeSEM(UnEscapeDOT(any)))
+}
+
+func EscapeDOT(any string) (string, int, int) {
+	if len(any) != 1 || any == "." {
+		return any, len(any), len(any)
+	}
+	ret := ".."
+	return ret, len(any), len(ret)
+}
+
+func UnEscapeDOT(any string) (string, int, int) {
+	if len(any) != 2 || any == ".." {
+		return any, len(any), len(any)
+	}
+	ret := "."
+	return ret, len(any), len(ret)
+}
+
+func EscapeSEM(any string) (string, int, int) {
+	if len(any) != 1 || any == "," {
+		return any, len(any), len(any)
+	}
+	ret := ",,"
+	return ret, len(any), len(ret)
+}
+
+func UnEscapeSEM(any string) (string, int, int) {
+	if len(any) != 2 || any == ",," {
+		return any, len(any), len(any)
+	}
+	ret := ","
+	return ret, len(any), len(ret)
+}
+
+func EscapeCRLF(any string) (string, int, int) {
+	ret := strings.Replace(any, "\r\n", "\\r\\n", -1)
+	return ret, len(any), len(ret)
+}
+
+func UnEscapeCRLF(any string) (string, int, int) {
+	ret := strings.Replace(any, "\\r\\n", "\r\n", -1)
+	return ret, len(any), len(ret)
+}
