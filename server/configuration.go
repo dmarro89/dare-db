@@ -39,11 +39,11 @@ func createDirectory(dirPath string) {
 	err := os.MkdirAll(dirPath, 0755)
 	switch {
 	case err == nil:
-		log.Printf("Directory created successfully: %s", dirPath) // info
+		log.Printf("Directory created successfully: %s", dirPath)
 	case os.IsExist(err):
-		log.Printf("Directory already exists: %s", dirPath) // debug
+		log.Printf("Directory already exists: %s", dirPath)
 	default:
-		log.Printf("Error creating directory: %v", err) // error
+		log.Printf("Error creating directory: %v", err)
 	}
 }
 
@@ -53,9 +53,12 @@ func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 	adminuser := DEFAULT_ADMIN
 	adminpass := utils.GenerateRandomString(DEFAULT_PW_LEN)
 
-	c.SetDefault("server.host", DEFAULT_SERVER_ADDR_STR)
-	c.SetDefault("server.port", DEFAULT_SERVER_TCP_PORT_STR)
-	c.SetDefault("server.port_udp", DEFAULT_SERVER_UDP_PORT_STR)
+	c.SetDefault("server.host", DEFAULT_SERVER_ADDR)
+	c.SetDefault("server.port", DEFAULT_SERVER_TCP_PORT)
+	c.SetDefault("server.port_udp", DEFAULT_SERVER_UDP_PORT)
+	c.SetDefault("server.socket_path", DEFAULT_SERVER_SOCKET_PATH)
+	c.SetDefault("server.socket_tcpport", DEFAULT_SERVER_SOCKET_TCP_PORT)
+	c.SetDefault("server.socket_tlsport", DEFAULT_SERVER_SOCKET_TLS_PORT)
 	c.SetDefault("server.admin_user", adminuser)
 	c.SetDefault("server.admin_password", adminpass)
 

@@ -25,6 +25,7 @@ This command will start the database as a Docker container in detached mode expo
 ... UDP port 2240 of the container to port ```2240``` on your ```localhost```
 ... TCP port 2420 of the container to port ```2420``` on your ```localhost```
 ... TCP port 3420 of the container to port ```3420``` on your ```localhost```
+... TCP port 4420 of the container to port ```4420``` on your ```localhost```
 
 ### Using TLS Version in Docker
 
@@ -37,7 +38,7 @@ docker build --target nodare-db-tls -f Dockerfile.tls.yml .
 Once the image is built, you can run the database as a Docker container with the following command:
 
 ```bash
-docker run -d -e NDB_HOST="0.0.0.0" -p "127.0.0.1:2240:2240" -p "127.0.0.1:2420:2420" -p "127.0.0.1:3420:3420" -e NDB_PORT=2420 -e NDB_UDP_PORT=2420 -e NDB_SUB_DICKS=1000 -e NDB_TLS_ENABLED="True" -e NDB_TLS_KEY="/app/settings/privkey.pem" -e NDB_TLS_CRT="/app/settings/fullchain.pem" nodare-db-tls
+docker run -d -e NDB_HOST="0.0.0.0" -p "127.0.0.1:2240:2240" -p "127.0.0.1:2420:2420" -p "127.0.0.1:3420:3420" -p "127.0.0.1:4420:4420" -e NDB_PORT=2420 -e NDB_UDP_PORT=2420 -e NDB_SUB_DICKS=1000 -e NDB_TLS_ENABLED="True" -e NDB_TLS_KEY="/app/settings/privkey.pem" -e NDB_TLS_CRT="/app/settings/fullchain.pem" nodare-db-tls
 ```
 
 Access GET/SET/DEL Commands via API over HTTPS on https://localhost:2420
