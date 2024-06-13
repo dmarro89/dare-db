@@ -62,7 +62,7 @@ func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 	c.SetDefault("server.admin_user", adminuser)
 	c.SetDefault("server.admin_password", adminpass)
 
-	c.SetDefault("log.log_level", DEFAULT_LOGLEVEL_STRING)
+	c.SetDefault("log.log_level", DEFAULT_LOGLEVEL_STR)
 	c.SetDefault("log.log_file", DEFAULT_LOG_FILE)
 
 	c.SetDefault("settings.base_dir", ".")
@@ -114,11 +114,8 @@ func ReadConfigsFromEnvs(c *viper.Viper) {
 	for key, value := range mapsEnvsToConfig {
 		valueFromEnv, ok := os.LookupEnv(value)
 		if ok {
-			log.Printf("GOT NEW ENV key='%s' value='%v'", key, valueFromEnv)
+			log.Printf("GOT NEW ENV key='%s' v='%v' valueFromEnv='%s", key, value, valueFromEnv)
 			c.Set(key, valueFromEnv)
-			//if key == "LOGLEVEL" {
-			//	srv.logger.SetLOGLEVEL(ilog.GetLOGLEVEL(value))
-			//}
 		} else {
 			log.Printf("NO ENV: key='%s' val='%s' !ok", key, valueFromEnv)
 		}

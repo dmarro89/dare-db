@@ -29,8 +29,12 @@ func NewLogger(lvl int) *LOG {
 }
 
 func GetEnvLOGLEVEL() int {
+	if logstr, ok := os.LookupEnv("LOGLEVEL"); !ok {
+		return -1
+	}
+	logstr := os.Getenv("LOGLEVEL")
 	// export LOGLEVEL=[INFO|WARN|DEBUG]
-	return GetLOGLEVEL(os.Getenv("LOGLEVEL"))
+	return GetLOGLEVEL(logstr)
 }
 
 func GetLOGLEVEL(loglvl string) (retval int) {
@@ -41,6 +45,8 @@ func GetLOGLEVEL(loglvl string) (retval int) {
 		retval = WARN
 	case "DEBUG":
 		retval = DEBUG
+	default:
+		retval = -1
 	}
 	if retval > 0 {
 		log.Printf("LOGLEVEL='%s'", loglvl)
@@ -60,9 +66,10 @@ func (l *LOG) IfDebug() bool {
 
 func (l *LOG) SetLOGLEVEL(lvl int) {
 	l.mux.Lock()
-	l.mux.Unlock()
+	defer l.mux.Unlock()
 	l.LVL = lvl
 	l.Info("LOGLEVEL=%d", lvl)
+	log.Printf("SetLOGLEVEL = %d", lvl)
 }
 
 // SetOutput sets the output writer for the logger.

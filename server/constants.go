@@ -13,7 +13,7 @@ const DATA_DIR = "dat"
 const CONFIG_DIR = "cfg"
 
 const DEFAULT_LOG_FILE = "db.log"
-const DEFAULT_LOGLEVEL_STRING string = "INFO"
+const DEFAULT_LOGLEVEL_STR = "INFO"
 const DEFAULT_LOGLEVEL_INT = ilog.INFO
 
 const DEFAULT_SERVER_ADDR = "[::1]"

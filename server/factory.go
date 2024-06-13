@@ -27,8 +27,10 @@ func (f *Factory) GetWebServer(ndbServer WebMux, logger *ilog.LOG) (srv Server, 
 		return
 	}
 	srv, vcfg, sub_dicks = NewHttpServer(ndbServer, logger)
-	logger.SetLOGLEVEL(ilog.GetLOGLEVEL(vcfg.GetString("LOGLEVEL")))
-	log.Printf("Factory TCP srv='%#v' vcfg='%#v' sub_dicks=%d loglvl=%d", srv, vcfg, sub_dicks, logger.LVL)
+	lvlstr := vcfg.GetString("log.log_level")
+	lvlint := ilog.GetLOGLEVEL(lvlstr)
+	logger.SetLOGLEVEL(lvlint)
+	log.Printf("Factory TCP srv='%#v' vcfg='%#v' sub_dicks=%d lvlstr='%s'=%d loglvl=%d", srv, vcfg, sub_dicks, lvlstr, lvlint, logger.LVL)
 	return
 }
 
