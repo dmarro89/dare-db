@@ -5,7 +5,7 @@ go 1.22.4
 require (
 	github.com/dchest/siphash v1.2.3
 	github.com/go-while/go-cpu-mem-profiler v0.0.0-20240612221627-856954a5fc83
-	github.com/go-while/nodare-db/logger v0.0.0-20240612214003-da08c928fa23
+	github.com/go-while/nodare-db/logger v0.0.0-20240613055418-b7347fa29595
 	github.com/spf13/viper v1.19.0
 )
 
