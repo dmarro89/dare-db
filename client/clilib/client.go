@@ -246,7 +246,7 @@ func UnEscapeDOT(any string) (string) {
 	return ret
 }
 
-func EscapeSEM(any string) (string, int, int) {
+func EscapeSEM(any string) (string) {
 	if len(any) != 1 || any == "," {
 		return any
 	}
@@ -254,7 +254,7 @@ func EscapeSEM(any string) (string, int, int) {
 	return ret
 }
 
-func UnEscapeSEM(any string) (string, int, int) {
+func UnEscapeSEM(any string) (string) {
 	if len(any) != 2 || any == ",," {
 		return any
 	}
