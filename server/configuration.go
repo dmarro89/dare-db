@@ -50,20 +50,14 @@ func createDirectory(dirPath string) {
 func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 
 	log.Printf("Creating default config file")
-	adminuser := DEFAULT_ADMIN
-	adminpass := utils.GenerateRandomString(DEFAULT_PW_LEN)
+	suadminuser := DEFAULT_ADMIN
+	suadminpass := utils.GenerateRandomString(DEFAULT_PW_LEN)
 
-	c.SetDefault("server.host", DEFAULT_SERVER_ADDR)
-	c.SetDefault("server.port", DEFAULT_SERVER_TCP_PORT)
-	c.SetDefault("server.port_udp", DEFAULT_SERVER_UDP_PORT)
-	c.SetDefault("server.socket_path", DEFAULT_SERVER_SOCKET_PATH)
-	c.SetDefault("server.socket_tcpport", DEFAULT_SERVER_SOCKET_TCP_PORT)
-	c.SetDefault("server.socket_tlsport", DEFAULT_SERVER_SOCKET_TLS_PORT)
-	c.SetDefault("server.admin_user", adminuser)
-	c.SetDefault("server.admin_password", adminpass)
+	c.SetDefault("server.superadmin_user", suadminuser)
+	c.SetDefault("server.superadmin_pass", suadminpass)
 
 	c.SetDefault("log.log_level", DEFAULT_LOGLEVEL_STR)
-	c.SetDefault("log.log_file", DEFAULT_LOG_FILE)
+	c.SetDefault("log.log_file", DEFAULT_LOGS_FILE)
 
 	c.SetDefault("settings.base_dir", ".")
 	c.SetDefault("settings.data_dir", DATA_DIR)
@@ -80,20 +74,25 @@ func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 	c.SetDefault("network.websrv_write_timeout", 10)
 	c.SetDefault("network.websrv_idle_timeout", 120)
 
+	c.SetDefault("server.host", DEFAULT_SERVER_ADDR)
+	c.SetDefault("server.port", DEFAULT_SERVER_TCP_PORT)
+	c.SetDefault("server.port_udp", DEFAULT_SERVER_UDP_PORT)
+	c.SetDefault("server.socket_path", DEFAULT_SERVER_SOCKET_PATH)
+	c.SetDefault("server.socket_tcpport", DEFAULT_SERVER_SOCKET_TCP_PORT)
+	c.SetDefault("server.socket_tlsport", DEFAULT_SERVER_SOCKET_TLS_PORT)
+
 	c.WriteConfigAs(cfgFile)
 
-	fmt.Printf("\nIMPORTANT! Generated ADMIN credentials! \n admin login: '%s' password: %s\n\n", adminuser, adminpass)
+	fmt.Printf("\nIMPORTANT! Generated ADMIN credentials! \n superadmin login: '%s' password: %s\n\n", suadminuser, suadminpass)
 }
 
 func mappingEnvsToConfig() {
 
-	mapsEnvsToConfig["server.host"] = "NDB_HOST"
-	mapsEnvsToConfig["server.port"] = "NDB_PORT"
-	mapsEnvsToConfig["server.admin_user"] = "NDB_USER"
-	mapsEnvsToConfig["server.admin_password"] = "NDB_PASSWORD"
+	mapsEnvsToConfig["server.superadmin_user"] = "NDB_SUPERADMIN"
+	mapsEnvsToConfig["server.superadmin_pass"] = "NDB_SADMINPASS"
 
 	mapsEnvsToConfig["log.log_level"] = "LOGLEVEL"
-	mapsEnvsToConfig["log.log_file"] = "LOG_FILE"
+	mapsEnvsToConfig["log.log_file"] = "LOGS_FILE"
 
 	mapsEnvsToConfig["settings.base_dir"] = "NDB_BASE_DIR"
 	mapsEnvsToConfig["settings.data_dir"] = "NDB_DATA_DIR"
@@ -107,6 +106,14 @@ func mappingEnvsToConfig() {
 	mapsEnvsToConfig["network.websrv_read_timeout"] = "NDB_WEBSRV_READ_TIMEOUT"
 	mapsEnvsToConfig["network.websrv_write_timeout"] = "NDB_WEBSRV_WRITE_TIMEOUT"
 	mapsEnvsToConfig["network.websrv_idle_timeout"] = "NDB_WEBSRV_IDLE_TIMEOUT"
+
+	mapsEnvsToConfig["server.host"] = "NDB_HOST"
+	mapsEnvsToConfig["server.port"] = "NDB_PORT"
+	mapsEnvsToConfig["server.port_udp"] = "DEFAULT_SERVER_UDP_PORT"
+	mapsEnvsToConfig["server.socket_path"] = "DEFAULT_SERVER_SOCKET_PATH"
+	mapsEnvsToConfig["server.socket_tcpport"] = "DEFAULT_SERVER_SOCKET_TCP_PORT"
+	mapsEnvsToConfig["server.socket_tlsport"] = "DEFAULT_SERVER_SOCKET_TLS_PORT"
+
 }
 
 func ReadConfigsFromEnvs(c *viper.Viper) {
