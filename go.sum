@@ -24,6 +24,14 @@ github.com/go-while/nodare-db/logger v0.0.0-20240613055156-75cddfeae861 h1:hnkfT
 github.com/go-while/nodare-db/logger v0.0.0-20240613055156-75cddfeae861/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
 github.com/go-while/nodare-db/logger v0.0.0-20240613055418-b7347fa29595 h1:0nLswKhGfWTxL6g/wPHpmRPmeU+cj44kbqzGd1nG0Ms=
 github.com/go-while/nodare-db/logger v0.0.0-20240613055418-b7347fa29595/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
+github.com/go-while/nodare-db/logger v0.0.0-20240613055513-f1b6f9c4b6c0 h1:P0EYQUoiXsJ0ZPAGOWJTHtUsGgFotWGey1IOizQ0G7Y=
+github.com/go-while/nodare-db/logger v0.0.0-20240613055513-f1b6f9c4b6c0/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
+github.com/go-while/nodare-db/logger v0.0.0-20240613074822-4457529397a0 h1:/WrW01eqe1oqgJCsvxS5EQuTCjYxEFuOYy6N0c69vXE=
+github.com/go-while/nodare-db/logger v0.0.0-20240613074822-4457529397a0/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
+github.com/go-while/nodare-db/logger v0.0.0-20240613090120-c7f99ca54466 h1:lRqAIXCgThvhrYscARG/+kCudsWcEc23i+UOvarKJ7E=
+github.com/go-while/nodare-db/logger v0.0.0-20240613090120-c7f99ca54466/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
+github.com/go-while/nodare-db/logger v0.0.0-20240613090224-8b267fb9e164 h1:uxS057V8luNY1Boir4NIBnKKaUIV3Tw+CeKMPQK82H0=
+github.com/go-while/nodare-db/logger v0.0.0-20240613090224-8b267fb9e164/go.mod h1:aTHbvtZhjVN1B4NYc2BTrnzWnS5G1V8wkI92QafBGBs=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
