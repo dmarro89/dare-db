@@ -15,7 +15,7 @@ import (
 
 var AVAIL_SUBDICKS = []uint32{10, 100, 1000, 10000, 100000, 1000000}
 
-type Config interface {
+type VConfig interface {
 	Get(key string) interface{}
 	GetString(key string) string
 	GetInt(key string) int
@@ -49,7 +49,7 @@ func createDirectory(dirPath string) {
 
 func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
 
-	log.Printf("Creating default configuration file")
+	log.Printf("Creating default config file")
 	adminuser := DEFAULT_ADMIN
 	adminpass := utils.GenerateRandomString(DEFAULT_PW_LEN)
 
@@ -116,6 +116,9 @@ func ReadConfigsFromEnvs(c *viper.Viper) {
 		if ok {
 			log.Printf("GOT NEW ENV key='%s' value='%v'", key, valueFromEnv)
 			c.Set(key, valueFromEnv)
+			//if key == "LOGLEVEL" {
+			//	srv.logger.SetLOGLEVEL(ilog.GetLOGLEVEL(value))
+			//}
 		} else {
 			log.Printf("NO ENV: key='%s' val='%s' !ok", key, valueFromEnv)
 		}
@@ -153,13 +156,13 @@ func PrintConfigsToConsole(c *viper.Viper) {
 	}
 }
 
-func NewConfiguration(cfgFile string) (Config, uint32) {
+func NewConfiguration(cfgFile string) (VConfig, uint32) {
 	v := viper.New()
 	mappingEnvsToConfig()
 	v.SetConfigType("toml")
 
 	if len(strings.TrimSpace(cfgFile)) == 0 {
-		log.Printf("No configuration file in '%s' was supplied. Using default value: %s", cfgFile, DEFAULT_CONFIG_FILE)
+		log.Printf("No config file in '%s' was supplied. Using default value: %s", cfgFile, DEFAULT_CONFIG_FILE)
 		cfgFile = DEFAULT_CONFIG_FILE
 	}
 
@@ -168,7 +171,7 @@ func NewConfiguration(cfgFile string) (Config, uint32) {
 		createDefaultConfigFile(v, cfgFile)
 	}
 
-	log.Printf("Using configuration file: %s", cfgFile)
+	log.Printf("Using config file: %s", cfgFile)
 
 	v.SetConfigFile(cfgFile)
 
@@ -187,6 +190,8 @@ func NewConfiguration(cfgFile string) (Config, uint32) {
 	return &ViperConfig{v}, sub_dicks
 }
 
+
+/*
 func (c *ViperConfig) Get(key string) interface{} {
 	return c.Viper.Get(key)
 }
@@ -202,3 +207,4 @@ func (c *ViperConfig) GetBool(key string) bool {
 func (c *ViperConfig) IsSet(key string) bool {
 	return c.Viper.IsSet(key)
 }
+*/

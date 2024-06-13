@@ -5,22 +5,30 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 )
 
 type Factory struct {
+	mux sync.Mutex
 }
 
 func NewFactory() *Factory {
 	return &Factory{}
 }
 
-func (f *Factory) GetWebServer(ndbServer WebMux, logger *ilog.LOG) (srv Server, sub_dicks uint32) {
-
+func (f *Factory) GetWebServer(ndbServer WebMux, logger *ilog.LOG) (srv Server, vcfg VConfig, sub_dicks uint32) {
+	f.mux.Lock()
+	defer f.mux.Unlock()
 	if f.getTLSEnabled() {
-		srv, sub_dicks = NewHttpsServer(ndbServer, logger)
+		srv, vcfg, sub_dicks = NewHttpsServer(ndbServer, logger)
+		log.Printf("Factory TLS srv='%#v'", srv)
+		//_ = NewSocketHandler(srv)
+		//sockets.Start()
 		return
 	}
-	srv, sub_dicks = NewHttpServer(ndbServer, logger)
+	srv, vcfg, sub_dicks = NewHttpServer(ndbServer, logger)
+	logger.SetLOGLEVEL(ilog.GetLOGLEVEL(vcfg.GetString("LOGLEVEL")))
+	log.Printf("Factory TCP srv='%#v' vcfg='%#v' sub_dicks=%d loglvl=%d", srv, vcfg, sub_dicks, logger.LVL)
 	return
 }
 

@@ -30,13 +30,19 @@ func main() {
 	switch MODE {
 	case 1:
 		db := database.NewDICK(logs, sdCh, waitCh)
-		db.XDICK.GenerateSALT()
+		if database.HASHER == database.HASH_siphash {
+			db.XDICK.GenerateSALT()
+		}
 		ndbServer := server.NewXNDBServer(db, logs)
-		srv, sub_dicks := server.NewFactory().GetWebServer(ndbServer, logs)
+		srv, vcfg, sub_dicks := server.NewFactory().GetWebServer(ndbServer, logs)
+		logs.Debug("Mode 1: Loaded vcfg='%#v'", vcfg)
 		sdCh <- sub_dicks // read sub_dicks from config, pass to sdCh so we can create subDICKs
 		logs.Debug("Mode 1: Created DB sub_dicks=%d", sub_dicks)
 		<-waitCh
-		logs.Info("Mode 1: Booted sub_dicks=%d", sub_dicks)
+		logs.Debug("Mode 1: Booted sub_dicks=%d srv='%v'", sub_dicks, srv)
+		//host := vcfg.GetString("server.host")
+		//log.Printf("MAIN Debug host='%v'", host)
+		//log.Printf("MAIN Debug srv='%#v'", srv)
 		if logs.IfDebug() {
 			logs.Debug("launching PprofWeb @ :1234")
 			go Prof.PprofWeb(":1234")

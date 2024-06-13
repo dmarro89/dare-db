@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-while/nodare-db/logger"
+	//"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,12 +16,13 @@ import (
 type Server interface {
 	Start()
 	Stop()
+	//Config()
 }
 
 type HttpServer struct {
 	ndbServer     WebMux
 	httpServer    *http.Server
-	configuration Config
+	VCFG           VConfig
 	sigChan       chan os.Signal
 	logger        *ilog.LOG
 }
@@ -28,49 +30,50 @@ type HttpServer struct {
 type HttpsServer struct {
 	ndbServer     WebMux
 	httpsServer   *http.Server
-	configuration Config
+	VCFG          VConfig
 	sigChan       chan os.Signal
 	logger        *ilog.LOG
 }
 
-func NewHttpServer(ndbServer WebMux, logger *ilog.LOG) (srv *HttpServer, sub_dicks uint32) {
-	cfg, sub_dicks := NewConfiguration("")
+func NewHttpServer(ndbServer WebMux, logger *ilog.LOG) (srv *HttpServer, cfg VConfig, sub_dicks uint32) {
+	cfg, sub_dicks = NewConfiguration("")
+	//log.Printf("NewHttpServer cfg='%#v' ViperConfig='%#v'", cfg, cfg.ViperConfig.)
 	srv = &HttpServer{
-		ndbServer:     ndbServer,
-		configuration: cfg,
 		sigChan:       make(chan os.Signal, 1),
+		ndbServer:     ndbServer,
 		logger:        logger,
+		VCFG:          cfg,
 	}
 	return
 }
 
-func NewHttpsServer(ndbServer WebMux, logger *ilog.LOG) (srv *HttpsServer, sub_dicks uint32) {
-	cfg, sub_dicks := NewConfiguration("")
+func NewHttpsServer(ndbServer WebMux, logger *ilog.LOG) (srv *HttpsServer, cfg VConfig, sub_dicks uint32) {
+	cfg, sub_dicks = NewConfiguration("")
 	srv = &HttpsServer{
 		sigChan:       make(chan os.Signal, 1),
-		configuration: cfg,
 		ndbServer:     ndbServer,
 		logger:        logger,
+		VCFG:          cfg,
 	}
 	return
 }
 
 func (server *HttpServer) Start() {
 
-	if server.configuration.IsSet("log.log_file") {
-		server.logger.OpenLogFile(server.configuration.GetString("log.log_file"))
+	if server.VCFG.IsSet("log.log_file") {
+		server.logger.OpenLogFile(server.VCFG.GetString("log.log_file"))
 	}
 
 	server.httpServer = &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
-		Addr:         fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
+		Addr:         fmt.Sprintf("%s:%s", server.VCFG.GetString("server.host"), server.VCFG.GetString("server.port")),
 		Handler:      server.ndbServer.CreateMux(),
 	}
 
 	go func() {
-		server.logger.Info("HttpServer @ '%s:%s'", server.configuration.GetString("server.host"), server.configuration.GetString("server.port"))
+		server.logger.Info("HttpServer @ '%s:%s'", server.VCFG.GetString("server.host"), server.VCFG.GetString("server.port"))
 		if err := server.httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			server.logger.Fatal("HTTP server error: %v", err)
 		}
@@ -101,15 +104,15 @@ func (server *HttpsServer) Start() {
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
-		Addr:         fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
+		Addr:         fmt.Sprintf("%s:%s", server.VCFG.GetString("server.host"), server.VCFG.GetString("server.port")),
 		Handler:      server.ndbServer.CreateMux(),
 	}
 
 	go func() {
-		server.logger.Info("HttpsServer @ '%s:%s'", server.configuration.GetString("server.host"), server.configuration.GetString("server.port"))
-		server.logger.Debug("HttpsServer: PUB_CERT='%s' PRIV_KEY='%s'", server.configuration.GetString("security.tls_cert_public"), server.configuration.GetString("security.tls_cert_private"))
+		server.logger.Info("HttpsServer @ '%s:%s'", server.VCFG.GetString("server.host"), server.VCFG.GetString("server.port"))
+		server.logger.Debug("HttpsServer: PUB_CERT='%s' PRIV_KEY='%s'", server.VCFG.GetString("security.tls_cert_public"), server.VCFG.GetString("security.tls_cert_private"))
 
-		if err := server.httpsServer.ListenAndServeTLS(server.configuration.GetString("security.tls_cert_public"), server.configuration.GetString("security.tls_cert_private")); !errors.Is(err, http.ErrServerClosed) {
+		if err := server.httpsServer.ListenAndServeTLS(server.VCFG.GetString("security.tls_cert_public"), server.VCFG.GetString("security.tls_cert_private")); !errors.Is(err, http.ErrServerClosed) {
 			server.logger.Fatal("HttpsServer: error %v", err)
 		}
 		server.logger.Debug("HttpsServer: closing")

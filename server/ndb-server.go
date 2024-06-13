@@ -12,7 +12,6 @@ const KEY_PARAM = "key"
 type WebMux interface {
 	CreateMux() *http.ServeMux
 	HandlerGetValByKey(w http.ResponseWriter, r *http.Request)
-	//HandlerGetValByKey(w http.ResponseWriter, r *http.Request)
 	HandlerSet(w http.ResponseWriter, r *http.Request)
 	HandlerDel(w http.ResponseWriter, r *http.Request)
 }

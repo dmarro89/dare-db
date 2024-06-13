@@ -16,7 +16,7 @@ const (
 )
 
 type LOG struct {
-	mux     sync.Mutex
+	mux     sync.RWMutex
 	LogFile *os.File
 	LVL     int
 	wrote   int // counts bytes
@@ -57,6 +57,8 @@ func (l *LOG) IfDebug() bool {
 }
 
 func (l *LOG) SetLOGLEVEL(lvl int) {
+	l.mux.Lock()
+	l.mux.Unlock()
 	l.LVL = lvl
 }
 
@@ -102,6 +104,8 @@ func (l *LOG) ConfigureFileAndConsoleOutput() {
 
 // Info logs a message at the info level.
 func (l *LOG) Info(format string, args ...any) {
+	l.mux.RLock()
+	defer l.mux.RUnlock()
 	if l.LVL >= INFO || l.LVL == DEBUG {
 		log.Printf("[INFO] "+format, args...)
 	}
@@ -109,18 +113,24 @@ func (l *LOG) Info(format string, args ...any) {
 
 // Warn logs a message at the warn level.
 func (l *LOG) Warn(format string, args ...any) {
+	l.mux.RLock()
+	defer l.mux.RUnlock()
 	// always print warnings
 	log.Printf("[WARN] "+format, args...)
 }
 
 // Error logs a message at the error level.
 func (l *LOG) Error(format string, args ...any) {
+	l.mux.RLock()
+	defer l.mux.RUnlock()
 	// always print errors
 	log.Printf("[ERROR] "+format, args...)
 }
 
 // Debug logs a message at the info level.
 func (l *LOG) Debug(format string, args ...any) {
+	l.mux.RLock()
+	defer l.mux.RUnlock()
 	if l.LVL == DEBUG {
 		log.Printf("[DEBUG] "+format, args...)
 	}
