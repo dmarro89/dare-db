@@ -1,0 +1,1 @@
+cd client && ./updateWithCliLib.sh  
