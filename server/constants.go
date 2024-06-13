@@ -12,7 +12,7 @@ const DEFAULT_CONFIG_FILE = "config.toml"
 const DATA_DIR = "dat"
 const CONFIG_DIR = "cfg"
 
-const DEFAULT_LOG_FILE = "db.log"
+const DEFAULT_LOGS_FILE = "db.log"
 const DEFAULT_LOGLEVEL_STR = "INFO"
 const DEFAULT_LOGLEVEL_INT = ilog.INFO
 
@@ -49,6 +49,8 @@ const magicS = "S" // set
 const magicZ = "Z" // quit
 
 // socket proto flags
+const KEY_LIMIT = 1024*1024*1024 // respond: CAN
+const VAL_LIMIT = 1024*1024*1024 // respond: CAN
 const EmptyStr = ""
 const CR = "\r"
 const LF = "\n"
