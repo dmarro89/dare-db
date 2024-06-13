@@ -23,6 +23,7 @@ type HttpServer struct {
 	httpServer    *http.Server
 	configuration Config
 	sigChan       chan os.Signal
+	logger        logger.Logger
 }
 
 func NewHttpServer(dareServer IDare) *HttpServer {
@@ -30,13 +31,13 @@ func NewHttpServer(dareServer IDare) *HttpServer {
 		dareServer:    dareServer,
 		configuration: NewConfiguration(""),
 		sigChan:       make(chan os.Signal, 1),
+		logger:        logger.NewDareLogger(),
 	}
 }
 
 func (server *HttpServer) Start() {
-
 	if server.configuration.IsSet("log.log_file") {
-		logger.OpenLogFile(server.configuration.GetString("log.log_file"))
+		server.logger.Start(server.configuration.GetString("log.log_file"))
 	}
 
 	server.httpServer = &http.Server{
@@ -45,12 +46,12 @@ func (server *HttpServer) Start() {
 	}
 
 	go func() {
-		logger.Info("Serving new connections on: ", server.configuration.GetString("server.host"), ":", server.configuration.GetString("server.port"))
+		server.logger.Info("Serving new connections on: ", server.configuration.GetString("server.host"), ":", server.configuration.GetString("server.port"))
 		if err := server.httpServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Fatal("HTTP server error: %v", err)
+			server.logger.Fatal("HTTP server error: %v", err)
 		}
-		logger.Info("Stopped serving new connections.")
-		logger.CloseLogFile()
+		server.logger.Info("Stopped serving new connections.")
+		server.logger.Close()
 	}()
 
 	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -62,13 +63,13 @@ func (server *HttpServer) Stop() {
 	defer shutdownRelease()
 
 	if err := server.httpServer.Shutdown(shutdownCtx); err != nil {
-		logger.Fatal("HTTP shutdown error:", err)
+		server.logger.Fatal("HTTP shutdown error:", err)
 	}
 
-	logger.Info("Graceful shutdown complete.")
+	server.logger.Info("Graceful shutdown complete.")
 	server.httpServer = nil
 
-	logger.CloseLogFile()
+	server.logger.Close()
 }
 
 type HttpsServer struct {
@@ -76,6 +77,7 @@ type HttpsServer struct {
 	httpsServer   *http.Server
 	configuration Config
 	sigChan       chan os.Signal
+	logger        logger.Logger
 }
 
 func NewHttpsServer(dareServer IDare) *HttpsServer {
@@ -83,6 +85,7 @@ func NewHttpsServer(dareServer IDare) *HttpsServer {
 		sigChan:       make(chan os.Signal, 1),
 		configuration: NewConfiguration(""),
 		dareServer:    dareServer,
+		logger:        logger.NewDareLogger(),
 	}
 }
 
@@ -93,14 +96,14 @@ func (server *HttpsServer) Start() {
 	}
 
 	go func() {
-		logger.Info("Serving new connections on: ", server.configuration.GetString("server.host"), ":", server.configuration.GetString("server.port"))
-		logger.Info("Using certificate files. (1) ", server.configuration.GetString("security.cert_private"), " ; (2) ", server.configuration.GetString("security.cert_public"))
+		server.logger.Info("Serving new connections on: ", server.configuration.GetString("server.host"), ":", server.configuration.GetString("server.port"))
+		server.logger.Info("Using certificate files. (1) ", server.configuration.GetString("security.cert_private"), " ; (2) ", server.configuration.GetString("security.cert_public"))
 
 		if err := server.httpsServer.ListenAndServeTLS(server.configuration.GetString("security.cert_public"), server.configuration.GetString("security.cert_private")); !errors.Is(err, http.ErrServerClosed) {
-			logger.Fatal("HTTPS server error: ", err)
+			server.logger.Fatal("HTTPS server error: ", err)
 		}
-		logger.Info("Stopped serving new connections.")
-		logger.CloseLogFile()
+		server.logger.Info("Stopped serving new connections.")
+		server.logger.Close()
 	}()
 
 	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -112,10 +115,10 @@ func (server *HttpsServer) Stop() {
 	defer shutdownRelease()
 
 	if err := server.httpsServer.Shutdown(shutdownCtx); err != nil {
-		logger.Fatal("HTTP shutdown error:", err)
+		server.logger.Fatal("HTTP shutdown error:", err)
 	}
 
-	logger.Info("Graceful shutdown complete.")
+	server.logger.Info("Graceful shutdown complete.")
 	server.httpsServer = nil
-	logger.CloseLogFile()
+	server.logger.Close()
 }
