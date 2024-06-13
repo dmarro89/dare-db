@@ -29,12 +29,11 @@ func NewLogger(lvl int) *LOG {
 }
 
 func GetEnvLOGLEVEL() int {
-	if logstr, ok := os.LookupEnv("LOGLEVEL"); !ok {
-		return -1
-	}
-	logstr := os.Getenv("LOGLEVEL")
 	// export LOGLEVEL=[INFO|WARN|DEBUG]
-	return GetLOGLEVEL(logstr)
+	if logstr, ok := os.LookupEnv("LOGLEVEL"); ok {
+		return GetLOGLEVEL(logstr)
+	}
+	return -1
 }
 
 func GetLOGLEVEL(loglvl string) (retval int) {
