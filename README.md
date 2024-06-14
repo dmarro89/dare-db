@@ -120,14 +120,18 @@ func main() {
 
 ## How to Contribute
 
-All kind of contributions are welcome (e.g., code, ideas, bugs, comments, documentations, etc.)! 
-If your found a bug open an issue and describe it shortly. If you want to add a feature, feel free to open an issue, assign it to yourself and make a pull request based on your issue. Note that discussion threads are used to discuss ideas. 
+All sorts of contributions to this project!  Here's how you can get involved:
 
-How to add a new feature using pull request:
+* *Found a bug?* Let us know! Open an [issue](https://github.com/dmarro89/dare-db/issues) and briefly describe the problem.
+* *Have a great idea for a new feature?* Open an [issue](https://github.com/dmarro89/dare-db/issues) to discuss it. If you'd like to implementing it yourself, you can assign this issue to yourself and create a pull request once the code/improvement/fix is ready.
+* *Want to talk about something related to the project?* [Discussion threads](https://github.com/dmarro89/dare-db/discussions) are the perfect place to brainstorm ideas
 
-1. Fork the repository (e.g., latest changes must be in ```main``` branch)
+
+Here is how you could add your new ```code/improvement/fix``` with a *pull request*:
+
+1. Fork the repository (e.g., latest changes must be in ```develop``` branch)
     ```
-    git clone -b main https://github.com/dmarro89/dare-db
+    git clone -b develop https://github.com/dmarro89/dare-db
     ```
 2. Create a new branch for your feature. Use number of a newly created issue and keywords (e.g., ```10-implement-feature-ABC```)
     ```
