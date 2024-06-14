@@ -15,17 +15,34 @@ const (
 	MAXSIZE = 100 * 1024 * 1024 // 100 MB
 )
 
-type LOG struct {
-	mux     sync.RWMutex
-	LogFile *os.File
-	LVL     int
-	wrote   int // counts bytes
+type ILOG interface {
+	LogStart(filename string)
+	LogClose()
+	Error(format string, args ...any)
+	Debug(format string, args ...any)
+	Fatal(format string, args ...any)
+	Info(format string, args ...any)
+	Warn(format string, args ...any)
+	GetLOGLEVEL() int
+	SetLOGLEVEL(int)
+	IfDebug() bool
 }
 
-func NewLogger(lvl int) *LOG {
-	return &LOG{
-		LVL: lvl,
+type LOG struct {
+	mux      sync.RWMutex
+	LogFile  *os.File
+	LOGLEVEL int
+	wrote    int // counts bytes
+}
+
+func NewLogger(lvl int, logfile string) ILOG {
+	logs := &LOG{
+		LOGLEVEL: lvl,
 	}
+	if logfile != "" {
+		logs.LogStart(logfile)
+	}
+	return logs
 }
 
 func GetEnvLOGLEVEL() int {
@@ -33,7 +50,7 @@ func GetEnvLOGLEVEL() int {
 	if logstr, ok := os.LookupEnv("LOGLEVEL"); ok {
 		return GetLOGLEVEL(logstr)
 	}
-	return -1
+	return INFO //default to INFO
 }
 
 func GetLOGLEVEL(loglvl string) (retval int) {
@@ -57,27 +74,34 @@ func GetLOGLEVEL(loglvl string) (retval int) {
 func (l *LOG) IfDebug() bool {
 	l.mux.RLock()
 	defer l.mux.RUnlock()
-	if l.LVL == DEBUG {
+	if l.LOGLEVEL == DEBUG {
 		return true
 	}
 	return false
 }
 
+func (l *LOG) GetLOGLEVEL() int {
+	l.mux.RLock()
+	l.Info("LOGLEVEL=%d", l.LOGLEVEL)
+	l.mux.RUnlock()
+	return l.LOGLEVEL
+}
+
 func (l *LOG) SetLOGLEVEL(lvl int) {
 	l.mux.Lock()
-	defer l.mux.Unlock()
-	l.LVL = lvl
-	l.Info("LOGLEVEL=%d", lvl)
+	l.LOGLEVEL = lvl
+	l.mux.Unlock()
+	l.Info("SetLOGLEVEL LOGLEVEL=%d", lvl)
 	log.Printf("SetLOGLEVEL = %d", lvl)
 }
 
-// SetOutput sets the output writer for the logger.
+// SetOutput sets the output writer for the logs.
 func (l *LOG) SetOutput(writer io.Writer) {
 	log.SetOutput(writer)
 }
 
-// OpenLogFile opens a log file for writing.
-func (l *LOG) OpenLogFile(filename string) {
+// LogStart opens a log file for writing.
+func (l *LOG) LogStart(filename string) {
 	l.mux.Lock()
 	defer l.mux.Unlock()
 	if l.LogFile != nil {
@@ -91,16 +115,17 @@ func (l *LOG) OpenLogFile(filename string) {
 	l.ConfigureFileAndConsoleOutput()
 }
 
-// OpenLogFile opens a log file for writing.
-func (l *LOG) CloseLogFile() {
+// LogStart opens a log file for writing.
+func (l *LOG) LogClose() {
 	l.mux.Lock()
 	defer l.mux.Unlock()
 	if l.LogFile != nil {
 		l.LogFile.Close()
+		l.LogFile = nil
 	}
 }
 
-// ConfigureFileAndConsoleOutput configures the logger to write to both a file and console.
+// ConfigureFileAndConsoleOutput configures the logs to write to both a file and console.
 func (l *LOG) ConfigureFileAndConsoleOutput() {
 	if l.LogFile == nil {
 		log.SetOutput(os.Stdout)
@@ -115,7 +140,7 @@ func (l *LOG) ConfigureFileAndConsoleOutput() {
 func (l *LOG) Info(format string, args ...any) {
 	l.mux.RLock()
 	defer l.mux.RUnlock()
-	if l.LVL >= INFO || l.LVL == DEBUG {
+	if l.LOGLEVEL >= INFO || l.LOGLEVEL == DEBUG {
 		log.Printf("[INFO] "+format, args...)
 	}
 }
@@ -140,7 +165,7 @@ func (l *LOG) Error(format string, args ...any) {
 func (l *LOG) Debug(format string, args ...any) {
 	l.mux.RLock()
 	defer l.mux.RUnlock()
-	if l.LVL == DEBUG {
+	if l.LOGLEVEL == DEBUG {
 		log.Printf("[DEBUG] "+format, args...)
 	}
 }

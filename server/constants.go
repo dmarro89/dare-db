@@ -5,21 +5,25 @@ import (
 	"github.com/go-while/nodare-db/logger"
 )
 
+var AVAIL_SUBDICKS = []uint32{10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 2000000000, 4000000000}
+
+const DEFAULT_SUB_DICKS = 100
+
 const DEFAULT_PW_LEN = 32 // admin/username:password
-const DEFAULT_ADMIN = "superadmin"
+const DEFAULT_SUPERADMIN = "superadmin"
 
 const DEFAULT_CONFIG_FILE = "config.toml"
 const DATA_DIR = "dat"
 const CONFIG_DIR = "cfg"
 
-const DEFAULT_LOGS_FILE = "db.log"
+const DEFAULT_LOGS_FILE = "ndb.log"
 const DEFAULT_LOGLEVEL_STR = "INFO"
 const DEFAULT_LOGLEVEL_INT = ilog.INFO
 
 const DEFAULT_SERVER_ADDR = "[::1]"
 const DEFAULT_SERVER_TCP_PORT = "2420"
 const DEFAULT_SERVER_UDP_PORT = "2240"
-const DEFAULT_SERVER_SOCKET_PATH = "/tmp/nodare-db.socket"
+const DEFAULT_SERVER_SOCKET_PATH = "/tmp/ndb.socket"
 const DEFAULT_SERVER_SOCKET_TCP_PORT = "3420"
 const DEFAULT_SERVER_SOCKET_TLS_PORT = "4420"
 
@@ -49,8 +53,8 @@ const magicS = "S" // set
 const magicZ = "Z" // quit
 
 // socket proto flags
-const KEY_LIMIT = 1024*1024*1024 // respond: CAN
-const VAL_LIMIT = 1024*1024*1024 // respond: CAN
+const KEY_LIMIT = 1024 * 1024 * 1024 // respond: CAN
+const VAL_LIMIT = 1024 * 1024 * 1024 // respond: CAN
 const EmptyStr = ""
 const CR = "\r"
 const LF = "\n"
@@ -75,5 +79,40 @@ const CAN = string(0x18) // Cancel 				// 24
 const EOM = string(0x19) // End of medium 		// 25
 const SUB = string(0x20) // Substitute  		// 26
 const ESC = string(0x1B) // Escape 				// 27
+
+// VIPER CONFIG DEFAULTS
+
+const V_DEFAULT_SUB_DICKS = "100"
+const V_DEFAULT_TLS_ENABLED = false
+const V_DEFAULT_NET_WEBSRV_READ_TIMEOUT = 5
+const V_DEFAULT_NET_WEBSRV_WRITE_TIMEOUT = 10
+const V_DEFAULT_NET_WEBSRV_IDLE_TIMEOUT = 120
+
+// VIPER CONFIG KEYS
+const VK_ACCESS_SUPERADMIN_USER = "server.superadmin_user"
+const VK_ACCESS_SUPERADMIN_PASS = "server.superadmin_pass"
+
+const VK_LOG_LOGLEVEL = "log.loglevel"
+const VK_LOG_LOGFILE = "log.logfile"
+
+const VK_SETTINGS_BASE_DIR = "settings.base_dir"
+const VK_SETTINGS_DATA_DIR = "settings.data_dir"
+const VK_SETTINGS_SETTINGS_DIR = "settings.settings_dir"
+const VK_SETTINGS_SUB_DICKS = "settings.sub_dicks"
+
+const VK_SEC_TLS_ENABLED = "security.tls_enabled"
+const VK_SEC_TLS_PRIVKEY = "security.tls_priv_key"
+const VK_SEC_TLS_PUBCERT = "security.tls_pub_cert"
+
+const VK_NET_WEBSRV_READ_TIMEOUT = "network.websrv_read_timeout"
+const VK_NET_WEBSRV_WRITE_TIMEOUT = "network.websrv_write_timeout"
+const VK_NET_WEBSRV_IDLE_TIMEOUT = "network.websrv_idle_timeout"
+
+const VK_SERVER_HOST = "server.bindip"
+const VK_SERVER_PORT_TCP = "server.port"
+const VK_SERVER_PORT_UDP = "server.port_udp"
+const VK_SERVER_SOCKET_PATH = "server.socket_path"
+const VK_SERVER_SOCKET_PORT_TCP = "server.socket_tcpport"
+const VK_SERVER_SOCKET_PORT_TLS = "server.socket_tlsport"
 
 var Prof *prof.Profiler

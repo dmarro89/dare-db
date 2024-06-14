@@ -2,8 +2,8 @@ package server
 
 import (
 	"github.com/go-while/nodare-db/logger"
-	"log"
 	"os"
+	//"log"
 	"strconv"
 	"sync"
 )
@@ -16,29 +16,36 @@ func NewFactory() *Factory {
 	return &Factory{}
 }
 
-func (f *Factory) GetWebServer(ndbServer WebMux, logger *ilog.LOG) (srv Server, vcfg VConfig, sub_dicks uint32) {
+func (f *Factory) NewNDBServer(cfg VConfig, ndbServer WebMux, logs ilog.ILOG) (srv Server) {
 	f.mux.Lock()
 	defer f.mux.Unlock()
-	if f.getTLSEnabled() {
-		srv, vcfg, sub_dicks = NewHttpsServer(ndbServer, logger)
-		log.Printf("Factory TLS srv='%#v'", srv)
+
+	bootsocket := false
+	if bootsocket {
 		//_ = NewSocketHandler(srv)
 		//sockets.Start()
-		return
 	}
-	srv, vcfg, sub_dicks = NewHttpServer(ndbServer, logger)
-	lvlstr := vcfg.GetString("log.log_level")
-	lvlint := ilog.GetLOGLEVEL(lvlstr)
-	logger.SetLOGLEVEL(lvlint)
-	log.Printf("Factory TCP srv='%#v' vcfg='%#v' sub_dicks=%d lvlstr='%s'=%d loglvl=%d", srv, vcfg, sub_dicks, lvlstr, lvlint, logger.LVL)
+	tls_enabled := cfg.GetBool(VK_SEC_TLS_ENABLED)
+	logfile := cfg.GetString(VK_LOG_LOGFILE)
+	logs.LogStart(logfile)
+	logs.Info("factory: viper cfg loaded tls_enabled=%t logfile='%s'", tls_enabled, logfile)
+	switch tls_enabled {
+	case false:
+		// TCP WEB SERVER
+		srv = NewHttpServer(cfg, ndbServer, logs)
+		logs.Debug("Factory TCP WEB\n srv='%#v'\n^EOL\n\n cfg='%#v'\n^EOL loglevel=%d\n\n", srv, cfg, logs.GetLOGLEVEL())
+	case true:
+		// TLS WEB SERVER
+		srv = NewHttpsServer(cfg, ndbServer, logs)
+		logs.Debug("Factory TLS WEB\n  srv='%#v'\n^EOL\n\n cfg='%#v'\n^EOL loglevel=%d\n\n", cfg, srv, logs.GetLOGLEVEL())
+	}
 	return
-}
+} // end func NewNDBServer
 
-func (f *Factory) getTLSEnabled() bool {
-	isTLSEnabled, err := strconv.ParseBool(os.Getenv("NDB_TLS_ENABLED"))
-	if err != nil {
-		isTLSEnabled = false
+func (f *Factory) getEnvTLSEnabled() bool {
+	isTLSEnabled, _ := strconv.ParseBool(os.Getenv("NDB_TLS_ENABLED"))
+	if isTLSEnabled {
+		return true
 	}
-	log.Printf("isTLSEnabled=%t", isTLSEnabled)
-	return isTLSEnabled
+	return false
 }

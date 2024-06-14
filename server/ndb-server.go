@@ -17,20 +17,19 @@ type WebMux interface {
 }
 
 type XNDBServer struct {
-	db     *database.XDatabase
-	logger *ilog.LOG
+	db   *database.XDatabase
+	logs ilog.ILOG
 }
 
-func NewXNDBServer(db *database.XDatabase, logger *ilog.LOG) *XNDBServer {
+func NewXNDBServer(db *database.XDatabase, logs ilog.ILOG) *XNDBServer {
 	return &XNDBServer{
-		db:     db,
-		logger: logger,
+		db:   db,
+		logs: logs,
 	}
 }
 
 func (srv *XNDBServer) CreateMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	//mux.HandleFunc("POST /loglvl/{"+KEY_PARAM+"}", srv.SetLogLvl)
 	mux.HandleFunc("GET /get/{"+KEY_PARAM+"}", srv.HandlerGetValByKey)
 	mux.HandleFunc("POST /set", srv.HandlerSet)
 	mux.HandleFunc("GET /del/{"+KEY_PARAM+"}", srv.HandlerDel)
@@ -38,8 +37,11 @@ func (srv *XNDBServer) CreateMux() *http.ServeMux {
 }
 
 func (srv *XNDBServer) HandlerGetValByKey(w http.ResponseWriter, r *http.Request) {
+	nilheader(w)
+
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
+		srv.logs.Warn("server /get/ method not allowed ")
 		return
 	}
 
@@ -79,10 +81,13 @@ func (srv *XNDBServer) HandlerGetValByKey(w http.ResponseWriter, r *http.Request
 
 	// response as raw plain text with VAL only
 	//w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(val.(string)))
 }
 
 func (srv *XNDBServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
+	nilheader(w)
+
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -98,7 +103,7 @@ func (srv *XNDBServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
 	for key, value := range data {
 		err = srv.db.Set(key, value)
 		if err != nil {
-			srv.logger.Warn("HandlerSet err='%v'", err)
+			srv.logs.Warn("HandlerSet err='%v'", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -109,6 +114,7 @@ func (srv *XNDBServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *XNDBServer) HandlerDel(w http.ResponseWriter, r *http.Request) {
+	nilheader(w)
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -139,6 +145,14 @@ func (srv *XNDBServer) SetLogLvl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// TODO test
-	srv.logger.SetLOGLEVEL(ilog.GetLOGLEVEL(key))
+	srv.logs.SetLOGLEVEL(ilog.GetLOGLEVEL(key))
 	return
+}
+
+func nilheader(w http.ResponseWriter) {
+	w.Header()["Date"] = nil
+	w.Header()["Content-Type"] = nil
+	w.Header()["Content-Length"] = nil
+	w.Header()["X-Content-Type-Options"] = nil
+	w.Header()["Transfer-Encoding"] = nil
 }

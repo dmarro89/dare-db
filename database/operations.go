@@ -18,7 +18,7 @@ import (
 // - interface{}: the value associated with the key, or nil if the key is not found.
 func (d *XDICK) Get(key string) interface{} {
 	idx := pcas.String(key) % d.SubCount // last N digit(s)
-	d.logger.Debug("Get key='%s' idx='%v'", key, idx)
+	d.logs.Debug("Get key='%s' idx='%v'", key, idx)
 	d.SubDICKs[idx].submux.Lock()
 	defer d.SubDICKs[idx].submux.Unlock()
 	entry := d.get(idx, key)
@@ -39,7 +39,7 @@ func (d *XDICK) Get(key string) interface{} {
 //   - error: an error if the key already exists in the dictionary.
 func (d *XDICK) Set(key string, value interface{}) error {
 	idx := pcas.String(key) % d.SubCount // last N digit(s)
-	d.logger.Debug("Set key='%s' idx='%v'", key, idx)
+	d.logs.Debug("Set key='%s' idx='%v'", key, idx)
 	d.SubDICKs[idx].submux.Lock()
 	defer d.SubDICKs[idx].submux.Unlock()
 	entry := d.get(idx, key)
@@ -60,13 +60,13 @@ func (d *XDICK) Set(key string, value interface{}) error {
 // - error: if the entry is not found.
 func (d *XDICK) Del(key string) error {
 	idx := pcas.String(key) % d.SubCount // last N digit(s)
-	d.logger.Debug("Del key='%s' idx='%v'", key, idx)
+	d.logs.Debug("Del key='%s' idx='%v'", key, idx)
 	d.SubDICKs[idx].submux.Lock()
 	defer d.SubDICKs[idx].submux.Unlock()
 	dictEntry := d.del(idx, key)
 	if dictEntry == nil {
 		return fmt.Errorf(`entry not found`)
 	}
-	d.logger.Debug("deleted key='%s'", key)
+	d.logs.Debug("deleted key='%s'", key)
 	return nil
 }

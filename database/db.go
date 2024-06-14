@@ -9,12 +9,13 @@ type XDatabase struct {
 	XDICK *XDICK
 }
 
-func NewDICK(logger *ilog.LOG, sdCh chan uint32, waitCh chan struct{}) *XDatabase {
-	returnsubDICKs := make(chan []*SubDICK, 1)
-	xdick := NewXDICK(logger, sdCh, returnsubDICKs)
+func NewDICK(logs ilog.ILOG, sub_dicks uint32, /*, sdCh chan uint32, waitCh chan struct{}*/) *XDatabase {
+	//returnsubDICKs := make(chan []*SubDICK, 1)
+	xdick := NewXDICK(logs, sub_dicks/*, sdCh, returnsubDICKs*/)
 	db := &XDatabase{
 		XDICK: xdick,
 	}
+	/*
 	go func(returnsubDICKs <-chan []*SubDICK, db *XDatabase) {
 		db.XDICK.logger.Debug("NewDICK waits async to return subDICKs")
 		subDICKs := <-returnsubDICKs
@@ -32,7 +33,7 @@ func NewDICK(logger *ilog.LOG, sdCh chan uint32, waitCh chan struct{}) *XDatabas
 		db.XDICK.logger.Debug("NewDICK set subDICKs=%d/%d notify waitCh", len(subDICKs), len(db.XDICK.SubDICKs))
 		waitCh <- struct{}{}
 	}(returnsubDICKs, db)
-
+	*/
 	return db
 }
 
