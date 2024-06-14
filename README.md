@@ -28,7 +28,7 @@ This command will start the database as a Docker container in detached mode, exp
 Build special Docker image, which will generate certificates
 
 ```bash
-docker build --target dare-db-tls -f Dockerfile.tls.yml .
+docker build -t dare-db-tls -f Dockerfile.tls.yml .
 ```
 
 Once the image is built, you can run the database as a Docker container with the following command:
