@@ -51,7 +51,6 @@ func (server *HttpServer) Start() {
 			server.logger.Fatal("HTTP server error: %v", err)
 		}
 		server.logger.Info("Stopped serving new connections.")
-		server.logger.Close()
 	}()
 
 	signal.Notify(server.sigChan, syscall.SIGINT, syscall.SIGTERM)
