@@ -88,7 +88,7 @@ func TestConfigurationConstants(t *testing.T) {
 }
 
 func TestConfiguratioReReadFeature(t *testing.T) {
-	os.Setenv("DARE_HOST", "0.0.0.0")
+	t.Setenv("DARE_HOST", "0.0.0.0")
 
 	testConfig := SetupTestConfiguration()
 	defer TeardownTestConfiguration()

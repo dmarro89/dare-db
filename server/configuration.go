@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 
 	"os"
 	"path/filepath"
@@ -66,7 +65,7 @@ func (c *ViperConfig) createDefaultConfigFile(cfgFile string) {
 
 	c.viper.WriteConfigAs(cfgFile)
 
-	fmt.Printf("\nIMPORTANT! Generate default password for admin on initial start. Store it securely. Password: %v\n\n", passwordNew)
+	c.logger.Info("\nIMPORTANT! Generate default password for admin on initial start. Store it securely. Password: %v\n\n", passwordNew)
 }
 
 func (c *ViperConfig) mappingEnvsToConfig() {
@@ -87,14 +86,12 @@ func (c *ViperConfig) mappingEnvsToConfig() {
 	c.mapsEnvsToConfig["security.cert_public"] = "DARE_CERT_PUBLIC"
 }
 
-func (c *ViperConfig) reReadConfigsFromEnvs() {
+func (c *ViperConfig) reReadConfigsFromEnvs(viper *viper.Viper) {
 	c.logger.Info("Re-reading configurations from environmental variables")
 	for key, value := range c.mapsEnvsToConfig {
-		valueFromEnv, ok := os.LookupEnv(value)
-		if ok {
+		if valueFromEnv, ok := os.LookupEnv(value); ok {
 			c.logger.Info("Use new configuration value from environmental variable for: ", key)
-			fmt.Println(key, valueFromEnv)
-			c.viper.Set(key, valueFromEnv)
+			viper.Set(key, valueFromEnv)
 		}
 	}
 }
@@ -110,13 +107,6 @@ func (c *ViperConfig) initDBDirectories() {
 	c.createDirectory(filepath.Join(dbBaseDir, c.GetString("settings.data_dir")))
 }
 
-func (c *ViperConfig) PrintConfigsToConsole() {
-	fmt.Printf("Print all configs that were set\n")
-	for key := range c.mapsEnvsToConfig {
-		fmt.Printf("Config value for for %v is: %v\n", key, c.Get(key))
-	}
-}
-
 func NewConfiguration(cfgFile string) Config {
 	logger := logger.NewDareLogger()
 	if len(strings.TrimSpace(cfgFile)) == 0 {
@@ -127,12 +117,10 @@ func NewConfiguration(cfgFile string) Config {
 	v := viper.New()
 	v.SetConfigType("toml")
 
-	c := &ViperConfig{viper: viper.New(), logger: logger, mapsEnvsToConfig: make(map[string]string)}
+	c := &ViperConfig{viper: v, logger: logger, mapsEnvsToConfig: make(map[string]string)}
 	c.mappingEnvsToConfig()
 
-	isFileExist := c.checkFileExists(cfgFile)
-
-	if !isFileExist {
+	if !c.checkFileExists(cfgFile) {
 		c.logger.Info("Configuration file does not exist: ", cfgFile)
 		c.createDefaultConfigFile(cfgFile)
 	}
@@ -140,7 +128,6 @@ func NewConfiguration(cfgFile string) Config {
 	logger.Info("Using configuration file: ", cfgFile)
 
 	v.SetConfigFile(cfgFile)
-
 	if err := v.ReadInConfig(); err != nil {
 		c.logger.Fatal("Error reading config file:", err)
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -150,7 +137,7 @@ func NewConfiguration(cfgFile string) Config {
 		}
 	}
 
-	c.reReadConfigsFromEnvs()
+	c.reReadConfigsFromEnvs(v)
 	c.initDBDirectories()
 	return &ViperConfig{viper: v, logger: logger, mapsEnvsToConfig: make(map[string]string)}
 }
