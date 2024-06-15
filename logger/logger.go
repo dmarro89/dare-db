@@ -8,74 +8,72 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log *logrus.Logger
-var logFile *os.File
-
-type customFormatter struct {
-	logrus.TextFormatter
+type Logger interface {
+	Start(filename string)
+	Close()
+	Info(args ...interface{})
+	Warn(args ...interface{})
+	Debug(args ...interface{})
+	Error(args ...interface{})
+	Fatal(args ...interface{})
 }
 
-func init() {
-	log = logrus.New()
-	formatter := &Formatter{
+type DareLogger struct {
+	logger *logrus.Logger
+	file   *os.File
+}
+
+func NewDareLogger() Logger {
+	log := logrus.New()
+	log.SetFormatter(&Formatter{
 		TimestampFormat: "2006-01-02 15:04:05",
 		LogFormat:       "%time% [%lvl%] - %msg%\n",
-	}
-	log.Formatter = formatter
+	})
+	return &DareLogger{logger: log}
 }
 
-// SetOutput sets the output writer for the logger.
-func SetOutput(writer io.Writer) {
-	log.SetOutput(writer)
-}
-
-// OpenLogFile opens a log file for writing.
-func OpenLogFile(filename string) {
+// Start opens a log file for writing and config output
+func (dareLogger *DareLogger) Start(filename string) {
 	logFile, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		fmt.Println("Error opening log file:", err)
 	}
-	ConfigureFileAndConsoleOutput(logFile)
+	dareLogger.file = logFile
+	dareLogger.logger.SetOutput(io.MultiWriter(os.Stdout, logFile))
 }
 
-// OpenLogFile opens a log file for writing.
-func CloseLogFile() {
-	logFile.Close()
-}
-
-// ConfigureFileAndConsoleOutput configures the logger to write to both a file and console.
-func ConfigureFileAndConsoleOutput(logFile *os.File) {
-	writer := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(writer)
+// Close close the log file.
+func (dareLogger *DareLogger) Close() {
+	if dareLogger.file != nil {
+		err := dareLogger.file.Close()
+		if err != nil {
+			fmt.Println("error closing log file: %w", err)
+		}
+		dareLogger.file = nil
+	}
 }
 
 // Debug logs a message at the debug level.
-func Debug(args ...interface{}) {
-	log.Debug(args...)
+func (dareLogger *DareLogger) Debug(args ...interface{}) {
+	dareLogger.logger.Debug(args...)
 }
 
 // Info logs a message at the info level.
-func Info(args ...interface{}) {
-	log.Info(args...)
+func (dareLogger *DareLogger) Info(args ...interface{}) {
+	dareLogger.logger.Info(args...)
 }
 
 // Warn logs a message at the warn level.
-func Warn(args ...interface{}) {
-	log.Warn(args...)
+func (dareLogger *DareLogger) Warn(args ...interface{}) {
+	dareLogger.logger.Warn(args...)
 }
 
 // Error logs a message at the error level.
-func Error(args ...interface{}) {
-	log.Error(args...)
+func (dareLogger *DareLogger) Error(args ...interface{}) {
+	dareLogger.logger.Error(args...)
 }
 
-// Fatal logs a message at the fatal level, then exits the program.
-func Fatal(args ...interface{}) {
-	//log.Fatal(args...)
-	var formattedArgs []interface{}
-	for _, arg := range args {
-		formattedArgs = append(formattedArgs, fmt.Sprintf("%v", arg))
-	}
-	// Convert each string to interface{} before passing
-	log.Fatal(append([]interface{}{}, formattedArgs...)...)
+// Fa tal logs a message at the fatal level, then exits the program.
+func (dareLogger *DareLogger) Fatal(args ...interface{}) {
+	dareLogger.logger.Fatal(args...)
 }

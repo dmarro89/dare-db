@@ -86,3 +86,13 @@ func TestConfigurationConstants(t *testing.T) {
 	assert.Equal(t, "settings", SETTINGS_DIR, "Host should be 'settings'")
 	assert.Equal(t, SETTINGS_DIR, testConfig.GetString("settings.settings_dir"), "Host should be 'settings'")
 }
+
+func TestConfiguratioReReadFeature(t *testing.T) {
+	t.Setenv("DARE_HOST", "0.0.0.0")
+
+	testConfig := SetupTestConfiguration()
+	defer TeardownTestConfiguration()
+
+	// Check if the values are correctly set
+	assert.Equal(t, "0.0.0.0", testConfig.GetString("server.host"), "Host should be '0.0.0.0'")
+}

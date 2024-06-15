@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dmarro89/dare-db/logger"
 	"github.com/stretchr/testify/mock"
 	"gotest.tools/assert"
 )
@@ -50,6 +51,7 @@ func TestHttpServerStartAndStop(t *testing.T) {
 		configuration: NewConfiguration(""),
 		sigChan:       sigChan,
 		dareServer:    &MockDareServer{},
+		logger:        logger.NewDareLogger(),
 	}
 
 	mux := http.NewServeMux()

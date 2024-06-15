@@ -2,7 +2,6 @@ package server
 
 import (
 	"errors"
-	"fmt"
 
 	"os"
 	"path/filepath"
@@ -22,127 +21,115 @@ type Config interface {
 }
 
 type ViperConfig struct {
-	*viper.Viper
+	viper            *viper.Viper
+	logger           logger.Logger
+	mapsEnvsToConfig map[string]string
 }
 
-var mapsEnvsToConfig map[string]string = make(map[string]string)
-
-func checkFileExists(filePath string) bool {
+func (c *ViperConfig) checkFileExists(filePath string) bool {
 	_, error := os.Stat(filePath)
 	return !errors.Is(error, os.ErrNotExist)
 }
 
-func createDirectory(dirPath string) {
+func (c *ViperConfig) createDirectory(dirPath string) {
 	err := os.MkdirAll(dirPath, 0755)
 	switch {
 	case err == nil:
-		logger.Info("Directory created successfully: ", dirPath)
+		c.logger.Info("Directory created successfully: ", dirPath)
 	case os.IsExist(err):
-		logger.Debug("Directory already exists: ", dirPath)
+		c.logger.Debug("Directory already exists: ", dirPath)
 	default:
-		logger.Error("Error creating directory:", err)
+		c.logger.Error("Error creating directory:", err)
 	}
 }
 
-func createDefaultConfigFile(c *viper.Viper, cfgFile string) {
-
+func (c *ViperConfig) createDefaultConfigFile(cfgFile string) {
 	var passwordNew string = utils.GenerateRandomString(12)
 
-	logger.Info("Creating default configuration file")
+	c.logger.Info("Creating default configuration file")
 
-	c.SetDefault("server.host", "127.0.0.1")
-	c.SetDefault("server.port", "2605")
-	c.SetDefault("server.admin_user", "admin")
-	c.SetDefault("server.admin_password", passwordNew)
+	c.viper.SetDefault("server.host", "127.0.0.1")
+	c.viper.SetDefault("server.port", "2605")
+	c.viper.SetDefault("server.admin_user", "admin")
+	c.viper.SetDefault("server.admin_password", passwordNew)
 
-	c.SetDefault("log.log_level", "INFO")
-	c.SetDefault("log.log_file", "daredb.log")
+	c.viper.SetDefault("log.log_level", "INFO")
+	c.viper.SetDefault("log.log_file", "daredb.log")
 
-	c.SetDefault("settings.data_dir", DATA_DIR)
-	c.SetDefault("settings.settings_dir", SETTINGS_DIR)
+	c.viper.SetDefault("settings.data_dir", DATA_DIR)
+	c.viper.SetDefault("settings.settings_dir", SETTINGS_DIR)
 
-	c.SetDefault("security.tls_enabled", false)
-	c.SetDefault("security.cert_private", filepath.Join(SETTINGS_DIR, "cert_private.pem"))
-	c.SetDefault("security.cert_public", filepath.Join(SETTINGS_DIR, "cert_public.pem"))
+	c.viper.SetDefault("security.tls_enabled", false)
+	c.viper.SetDefault("security.cert_private", filepath.Join(SETTINGS_DIR, "cert_private.pem"))
+	c.viper.SetDefault("security.cert_public", filepath.Join(SETTINGS_DIR, "cert_public.pem"))
 
-	c.WriteConfigAs(cfgFile)
+	c.viper.WriteConfigAs(cfgFile)
 
-	fmt.Printf("\nIMPORTANT! Generate default password for admin on initial start. Store it securely. Password: %v\n\n", passwordNew)
+	c.logger.Info("\nIMPORTANT! Generate default password for admin on initial start. Store it securely. Password: %v\n\n", passwordNew)
 }
 
-func mappingEnvsToConfig() {
+func (c *ViperConfig) mappingEnvsToConfig() {
+	c.mapsEnvsToConfig["server.host"] = "DARE_HOST"
+	c.mapsEnvsToConfig["server.port"] = "DARE_PORT"
+	c.mapsEnvsToConfig["server.admin_user"] = "DARE_USER"
+	c.mapsEnvsToConfig["server.admin_password"] = "DARE_PASSWORD"
 
-	mapsEnvsToConfig["server.host"] = "DARE_HOST"
-	mapsEnvsToConfig["server.port"] = "DARE_PORT"
-	mapsEnvsToConfig["server.admin_user"] = "DARE_USER"
-	mapsEnvsToConfig["server.admin_password"] = "DARE_PASSWORD"
+	c.mapsEnvsToConfig["log.log_level"] = "DARE_LOG_LEVEL"
+	c.mapsEnvsToConfig["log.log_file"] = "DARE_LOG_FILE"
 
-	mapsEnvsToConfig["log.log_level"] = "DARE_LOG_LEVEL"
-	mapsEnvsToConfig["log.log_file"] = "DARE_LOG_FILE"
+	c.mapsEnvsToConfig["settings.data_dir"] = "DARE_DATA_DIR"
+	c.mapsEnvsToConfig["settings.base_dir"] = "DARE_BASE_DIR"
+	c.mapsEnvsToConfig["settings.settings_dir"] = "DARE_SETTINGS_DIR"
 
-	mapsEnvsToConfig["settings.data_dir"] = "DARE_DATA_DIR"
-	mapsEnvsToConfig["settings.base_dir"] = "DARE_BASE_DIR"
-	mapsEnvsToConfig["settings.settings_dir"] = "DARE_SETTINGS_DIR"
-
-	mapsEnvsToConfig["security.tls_enabled"] = "DARE_TLS_ENABLED"
-	mapsEnvsToConfig["security.cert_private"] = "DARE_CERT_PRIVATE"
-	mapsEnvsToConfig["security.cert_public"] = "DARE_CERT_PUBLIC"
+	c.mapsEnvsToConfig["security.tls_enabled"] = "DARE_TLS_ENABLED"
+	c.mapsEnvsToConfig["security.cert_private"] = "DARE_CERT_PRIVATE"
+	c.mapsEnvsToConfig["security.cert_public"] = "DARE_CERT_PUBLIC"
 }
 
-func reReadConfigsFromEnvs(c *viper.Viper) {
-	logger.Info("Re-reading configurations from environmental variables")
-	for key, value := range mapsEnvsToConfig {
-		valueFromEnv, ok := os.LookupEnv(value)
-		if ok {
-			logger.Info("Use new configuration value from environmental variable for: ", key)
-			fmt.Println(key, valueFromEnv)
-			c.Set(key, valueFromEnv)
+func (c *ViperConfig) reReadConfigsFromEnvs(viper *viper.Viper) {
+	c.logger.Info("Re-reading configurations from environmental variables")
+	for key, value := range c.mapsEnvsToConfig {
+		if valueFromEnv, ok := os.LookupEnv(value); ok {
+			c.logger.Info("Use new configuration value from environmental variable for: ", key)
+			viper.Set(key, valueFromEnv)
 		}
 	}
 }
 
-func initDBDirectories(c *viper.Viper) {
-
+func (c *ViperConfig) initDBDirectories() {
 	dbBaseDir, err := os.Getwd()
 	if err != nil {
-		logger.Error("Error in getting current working directory:", err)
+		c.logger.Error("Error in getting current working directory:", err)
 	}
 	os.Setenv("DARE_BASE_DIR", dbBaseDir)
 
-	createDirectory(filepath.Join(dbBaseDir, SETTINGS_DIR))
-	createDirectory(filepath.Join(dbBaseDir, c.GetString("settings.data_dir")))
-}
-
-func PrintConfigsToConsole(c *viper.Viper) {
-	fmt.Printf("Print all configs that were set\n")
-	for key, _ := range mapsEnvsToConfig {
-		fmt.Printf("Config value for for %v is: %v\n", key, c.Get(key))
-	}
+	c.createDirectory(filepath.Join(dbBaseDir, SETTINGS_DIR))
+	c.createDirectory(filepath.Join(dbBaseDir, c.GetString("settings.data_dir")))
 }
 
 func NewConfiguration(cfgFile string) Config {
-	v := viper.New()
-	mappingEnvsToConfig()
-	v.SetConfigType("toml")
-
+	logger := logger.NewDareLogger()
 	if len(strings.TrimSpace(cfgFile)) == 0 {
 		logger.Info("No configuration file was supplied. Using default value: ", DEFAULT_CONFIG_FILE)
 		cfgFile = DEFAULT_CONFIG_FILE
 	}
 
-	isFileExist := checkFileExists(cfgFile)
+	v := viper.New()
+	v.SetConfigType("toml")
 
-	if !isFileExist {
-		logger.Info("Configuration file does not exist: ", cfgFile)
-		createDefaultConfigFile(v, cfgFile)
+	c := &ViperConfig{viper: v, logger: logger, mapsEnvsToConfig: make(map[string]string)}
+	c.mappingEnvsToConfig()
+
+	if !c.checkFileExists(cfgFile) {
+		c.logger.Info("Configuration file does not exist: ", cfgFile)
+		c.createDefaultConfigFile(cfgFile)
 	}
 
 	logger.Info("Using configuration file: ", cfgFile)
 
 	v.SetConfigFile(cfgFile)
-
 	if err := v.ReadInConfig(); err != nil {
-		logger.Fatal("Error reading config file:", err)
+		c.logger.Fatal("Error reading config file:", err)
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			panic("Config file was not found")
 		} else {
@@ -150,24 +137,23 @@ func NewConfiguration(cfgFile string) Config {
 		}
 	}
 
-	reReadConfigsFromEnvs(v)
-	initDBDirectories(v)
-	//PrintConfigsToConsole(v)
-	return &ViperConfig{v}
+	c.reReadConfigsFromEnvs(v)
+	c.initDBDirectories()
+	return &ViperConfig{viper: v, logger: logger, mapsEnvsToConfig: make(map[string]string)}
 }
 
 func (c *ViperConfig) Get(key string) interface{} {
-	return c.Viper.Get(key)
+	return c.viper.Get(key)
 }
 
 func (c *ViperConfig) GetString(key string) string {
-	return c.Viper.GetString(key)
+	return c.viper.GetString(key)
 }
 
 func (c *ViperConfig) GetBool(key string) bool {
-	return c.Viper.GetBool(key)
+	return c.viper.GetBool(key)
 }
 
 func (c *ViperConfig) IsSet(key string) bool {
-	return c.Viper.IsSet(key)
+	return c.viper.IsSet(key)
 }
