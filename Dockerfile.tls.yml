@@ -44,4 +44,6 @@ COPY --from=builder /app/app .
 COPY --from=tls-cert-gen /ssl/settings/cert_private.pem /app/settings/cert_private.pem
 COPY --from=tls-cert-gen /ssl/settings/cert_public.pem /app/settings/cert_public.pem
 
+EXPOSE 2605
+
 ENTRYPOINT ["./app"]
