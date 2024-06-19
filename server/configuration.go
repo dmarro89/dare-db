@@ -48,7 +48,7 @@ func (c *ViperConfig) createDefaultConfigFile(cfgFile string) {
 
 	c.logger.Info("Creating default configuration file")
 
-	c.viper.SetDefault("server.host", "0.0.0.0")
+	c.viper.SetDefault("server.host", "127.0.0.1")
 	c.viper.SetDefault("server.port", "2605")
 	c.viper.SetDefault("server.admin_user", "admin")
 	c.viper.SetDefault("server.admin_password", passwordNew)
