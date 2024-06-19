@@ -1,31 +1,22 @@
 package server
 
 import (
-	"os"
-	"strconv"
+	"github.com/dmarro89/dare-db/logger"
 )
 
 type Factory struct {
+	configuration Config
+	logger        logger.Logger
 }
 
-func NewFactory() *Factory {
-	return &Factory{}
+func NewFactory(configuration Config, logger logger.Logger) *Factory {
+	return &Factory{configuration: configuration, logger: logger}
 }
 
 func (f *Factory) GetWebServer(dareServer IDare) Server {
-
-	if f.getTLSEnabled() {
-		return NewHttpsServer(dareServer)
+	if f.configuration.GetBool("security.tls_enabled") {
+		return NewHttpsServer(dareServer, f.configuration, f.logger)
 	}
 
-	return NewHttpServer(dareServer)
-}
-
-func (f *Factory) getTLSEnabled() bool {
-	//FIXME: pass teh right config to the factory
-	isTLSEnabled, err := strconv.ParseBool(os.Getenv("DARE_TLS_ENABLED"))
-	if err != nil {
-		isTLSEnabled = false
-	}
-	return isTLSEnabled
+	return NewHttpServer(dareServer, f.configuration, f.logger)
 }

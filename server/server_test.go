@@ -37,7 +37,7 @@ func (ds *MockDareServer) HandlerDelete(w http.ResponseWriter, r *http.Request) 
 }
 
 func TestNewHttpServer(t *testing.T) {
-	server := NewHttpServer(&MockDareServer{})
+	server := NewHttpServer(&MockDareServer{}, NewConfiguration(""), logger.NewDareLogger())
 	assert.Assert(t, server != nil)
 	assert.Assert(t, server.configuration != nil)
 	assert.Assert(t, server.sigChan != nil)
@@ -73,7 +73,7 @@ func TestHttpServerStartAndStop(t *testing.T) {
 }
 
 func TestNewHttpsServer(t *testing.T) {
-	server := NewHttpsServer(&MockDareServer{})
+	server := NewHttpsServer(&MockDareServer{}, NewConfiguration(""), logger.NewDareLogger())
 	assert.Assert(t, server != nil)
 	assert.Assert(t, server.configuration != nil)
 	assert.Assert(t, server.sigChan != nil)
