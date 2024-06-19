@@ -15,7 +15,7 @@ To run the database as a Docker image, ensure you have Docker installed on your 
 ```bash
 docker build -t dare-db .
 ```
-Once the image is built, you can run the database as a Docker container with the following command:
+Once the image is built, you can run the database as a Docker container with the following command (*note: a configuration option ```-e DARE_HOST="0.0.0.0"``` is explicitly set to enable connections from the host machine to the database running within the Docker container*):
 
 ```bash
 docker run -d -p "127.0.0.1:2605:2605" -e DARE_HOST="0.0.0.0" dare-db 
