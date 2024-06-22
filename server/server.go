@@ -26,12 +26,12 @@ type HttpServer struct {
 	logger        logger.Logger
 }
 
-func NewHttpServer(dareServer IDare) *HttpServer {
+func NewHttpServer(dareServer IDare, configuration Config, logger logger.Logger) *HttpServer {
 	return &HttpServer{
 		dareServer:    dareServer,
-		configuration: NewConfiguration(""),
+		configuration: configuration,
 		sigChan:       make(chan os.Signal, 1),
-		logger:        logger.NewDareLogger(),
+		logger:        logger,
 	}
 }
 
@@ -79,12 +79,12 @@ type HttpsServer struct {
 	logger        logger.Logger
 }
 
-func NewHttpsServer(dareServer IDare) *HttpsServer {
+func NewHttpsServer(dareServer IDare, configuration Config, logger logger.Logger) *HttpsServer {
 	return &HttpsServer{
 		sigChan:       make(chan os.Signal, 1),
-		configuration: NewConfiguration(""),
+		configuration: configuration,
 		dareServer:    dareServer,
-		logger:        logger.NewDareLogger(),
+		logger:        logger,
 	}
 }
 

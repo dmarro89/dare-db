@@ -88,11 +88,11 @@ func TestConfigurationConstants(t *testing.T) {
 }
 
 func TestConfiguratioReReadFeature(t *testing.T) {
-	t.Setenv("DARE_HOST", "0.0.0.0")
+	t.Setenv("DARE_PORT", "2606")
 
 	testConfig := SetupTestConfiguration()
 	defer TeardownTestConfiguration()
 
 	// Check if the values are correctly set
-	assert.Equal(t, "0.0.0.0", testConfig.GetString("server.host"), "Host should be '0.0.0.0'")
+	assert.Equal(t, "2606", testConfig.GetString("server.port"), "Port should be '2606'")
 }
