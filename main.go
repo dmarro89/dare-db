@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	logger := logger.NewDareLogger()
 	configuration := server.NewConfiguration("")
 	database := database.NewDatabase()

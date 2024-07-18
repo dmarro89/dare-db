@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/database"
 )
 
@@ -29,9 +30,10 @@ func NewDareServer(db *database.Database) *DareServer {
 
 func (srv *DareServer) CreateMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /get/{key}", srv.HandlerGetById)
-	mux.HandleFunc("POST /set", srv.HandlerSet)
-	mux.HandleFunc("DELETE /delete/{key}", srv.HandlerDelete)
+	middleware := auth.NewCasbinMiddleware()
+	mux.HandleFunc("GET /get/{key}", middleware.HandleFunc(srv.HandlerGetById))
+	mux.HandleFunc("POST /set", middleware.HandleFunc(srv.HandlerSet))
+	mux.HandleFunc("DELETE /delete/{key}", middleware.HandleFunc(srv.HandlerDelete))
 	return mux
 }
 

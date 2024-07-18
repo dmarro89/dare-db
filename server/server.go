@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/casbin/casbin"
 	"github.com/dmarro89/dare-db/logger"
 )
 
@@ -24,6 +25,7 @@ type HttpServer struct {
 	configuration Config
 	sigChan       chan os.Signal
 	logger        logger.Logger
+	enf           *casbin.Enforcer
 }
 
 func NewHttpServer(dareServer IDare, configuration Config, logger logger.Logger) *HttpServer {
@@ -32,6 +34,7 @@ func NewHttpServer(dareServer IDare, configuration Config, logger logger.Logger)
 		configuration: configuration,
 		sigChan:       make(chan os.Signal, 1),
 		logger:        logger,
+		enf:           casbin.NewEnforcer("./rbac_model.conf", "./rbac_policy.csv"),
 	}
 }
 
