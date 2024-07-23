@@ -34,7 +34,7 @@ func NewHttpServer(dareServer IDare, configuration Config, logger logger.Logger)
 		configuration: configuration,
 		sigChan:       make(chan os.Signal, 1),
 		logger:        logger,
-		enf:           casbin.NewEnforcer("./rbac_model.conf", "./rbac_policy.csv"),
+		enf:           casbin.NewEnforcer("../auth/rbac_model.conf", "../auth/rbac_policy.csv"),
 	}
 }
 

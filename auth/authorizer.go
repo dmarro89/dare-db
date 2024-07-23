@@ -19,12 +19,17 @@ type users struct {
 type CasbinAuth struct {
 	users    map[string]users
 	enforcer *casbin.Enforcer
+	logger Logger
+}
+
+func NewCasbinAuth() *CasbinAuth {
+	return &CasbinAuth{}
 }
 
 func (a *CasbinAuth) HasPermission(userID, action, asset string) bool {
 	user, ok := a.users[userID]
 	if !ok {
-		log.Print("Unknown user:", userID)
+		logger.Info("Unknown user:", userID)
 		return false
 	}
 
@@ -39,11 +44,13 @@ func (a *CasbinAuth) HasPermission(userID, action, asset string) bool {
 
 type Middleware struct {
 	authorizer Authorizer
+	logger Logger
 }
 
 func NewCasbinMiddleware() *Middleware {
 	return &Middleware{
-		authorizer: &CasbinAuth{},
+		authorizer: NewCasbinAuth(),
+		logger: logger.NewDareLogger()
 	}
 }
 
@@ -51,8 +58,11 @@ func (middleware *Middleware) HandleFunc(next http.HandlerFunc) http.HandlerFunc
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, _, ok := r.BasicAuth()
 		asset := r.PathValue("asset")
+		if asset == "" {
+			asset = "dare-db"
+		}
 		if !ok || !middleware.authorizer.HasPermission(username, r.Method, asset) {
-			log.Printf("User '%s' is not allowed to '%s' resource '%s'", username, r.Method, asset)
+			logger.Info("User '%s' is not allowed to '%s' resource '%s'", username, r.Method, asset)
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
