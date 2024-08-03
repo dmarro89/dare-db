@@ -28,8 +28,18 @@ func NewDareServer(db *database.Database) *DareServer {
 	}
 }
 
+func getDefaultAuth() *auth.CasbinAuth {
+	return auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", map[string]auth.User{
+		"user": {User: "user", Roles: []string{"user"}},
+	})
+}
+
 func (srv *DareServer) CreateMux(casbinAuth *auth.CasbinAuth) *http.ServeMux {
 	mux := http.NewServeMux()
+
+	if casbinAuth == nil {
+		casbinAuth = getDefaultAuth()
+	}
 
 	middleware := auth.NewCasbinMiddleware(casbinAuth)
 	mux.HandleFunc("GET /get/{key}", middleware.HandleFunc(srv.HandlerGetById))
