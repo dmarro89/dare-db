@@ -45,7 +45,7 @@ func (server *HttpServer) Start() {
 
 	server.httpServer = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
-		Handler: server.dareServer.CreateMux(),
+		Handler: server.dareServer.CreateMux(nil),
 	}
 
 	go func() {
@@ -94,7 +94,7 @@ func NewHttpsServer(dareServer IDare, configuration Config, logger logger.Logger
 func (server *HttpsServer) Start() {
 	server.httpsServer = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
-		Handler: server.dareServer.CreateMux(),
+		Handler: server.dareServer.CreateMux(nil),
 	}
 
 	go func() {

@@ -7,7 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/database"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 )
 
@@ -113,6 +115,65 @@ func TestCreateMux(t *testing.T) {
 	srv := NewDareServer(db)
 
 	// Create a new ServeMux using the CreateMux method
-	mux := srv.CreateMux()
+	mux := srv.CreateMux(auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", map[string]auth.User{
+		"user1": {User: "user1", Roles: []string{"role1"}}, "user2": {User: "user2", Roles: []string{"role2"}},
+	}))
 	assert.Equal(t, mux != nil, true)
+}
+
+func TestMiddleware_ProtectedEndpoints(t *testing.T) {
+	db := database.NewDatabase()
+	srv := NewDareServer(db)
+	mux := srv.CreateMux(auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", map[string]auth.User{
+		"user1": {User: "user1", Roles: []string{"role1"}}, "user2": {User: "user2", Roles: []string{"role2"}},
+	}))
+
+	// Test POST request for a protected resource
+	postData := map[string]interface{}{"newKey": "newValue"}
+	body, err := json.Marshal(postData)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest("POST", "/set", bytes.NewReader(body))
+	require.NoError(t, err)
+	req.SetBasicAuth("user2", "password")
+
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	// Check if the response status code is Created (201)
+	require.Equal(t, http.StatusCreated, rr.Code)
+
+	// Test GET request for a protected resource
+	req, err = http.NewRequest("GET", "/get/newKey", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth("user1", "password") // Assuming basic auth for this example
+
+	rr = httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	// Check if the response status code is OK (200)
+	require.Equal(t, http.StatusOK, rr.Code)
+	require.Contains(t, rr.Body.String(), string(body))
+
+	// Test DELETE request for a protected resource
+	req, err = http.NewRequest("DELETE", "/delete/existingKey", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth("user1", "password")
+
+	rr = httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	// Check if the response status code is OK (200)
+	require.Equal(t, http.StatusForbidden, rr.Code)
+
+	// Test accessing without proper credentials
+	req, err = http.NewRequest("GET", "/get/existingKey", nil)
+	require.NoError(t, err)
+	// Not setting basic auth here to simulate missing credentials
+
+	rr = httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	// Check if the response status code is Unauthorized (401)
+	require.Equal(t, http.StatusUnauthorized, rr.Code)
 }

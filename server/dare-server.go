@@ -12,7 +12,7 @@ import (
 const KEY_PARAM = "key"
 
 type IDare interface {
-	CreateMux() *http.ServeMux
+	CreateMux(*auth.CasbinAuth) *http.ServeMux
 	HandlerGetById(w http.ResponseWriter, r *http.Request)
 	HandlerSet(w http.ResponseWriter, r *http.Request)
 	HandlerDelete(w http.ResponseWriter, r *http.Request)
@@ -28,9 +28,10 @@ func NewDareServer(db *database.Database) *DareServer {
 	}
 }
 
-func (srv *DareServer) CreateMux() *http.ServeMux {
+func (srv *DareServer) CreateMux(casbinAuth *auth.CasbinAuth) *http.ServeMux {
 	mux := http.NewServeMux()
-	middleware := auth.NewCasbinMiddleware()
+
+	middleware := auth.NewCasbinMiddleware(casbinAuth)
 	mux.HandleFunc("GET /get/{key}", middleware.HandleFunc(srv.HandlerGetById))
 	mux.HandleFunc("POST /set", middleware.HandleFunc(srv.HandlerSet))
 	mux.HandleFunc("DELETE /delete/{key}", middleware.HandleFunc(srv.HandlerDelete))

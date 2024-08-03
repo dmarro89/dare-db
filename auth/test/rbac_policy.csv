@@ -1,0 +1,5 @@
+p, role1, dare-db, GET
+p, role2, dare-db, POST
+
+g, user1, role1
+g, user2, role2
