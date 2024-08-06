@@ -12,9 +12,9 @@ const modelPath = "./test/rbac_model.conf"
 const policyPath = "./test/rbac_policy.csv"
 
 func TestNewCasbinAuth(t *testing.T) {
-	casbinAuth := NewCasbinAuth(modelPath, policyPath, map[string]User{
-		"user1": {User: "user1", Roles: []string{"role1"}},
-		"user2": {User: "user2", Roles: []string{"role2"}},
+	casbinAuth := NewCasbinAuth(modelPath, policyPath, Users{
+		"user1": {Roles: []string{"role1"}},
+		"user2": {Roles: []string{"role2"}},
 	})
 
 	require.NotNil(t, casbinAuth)
@@ -26,9 +26,9 @@ func TestHasPermission(t *testing.T) {
 	modelPath := "./test/rbac_model.conf"
 	policyPath := "./test/rbac_policy.csv"
 
-	casbinAuth := NewCasbinAuth(modelPath, policyPath, map[string]User{
-		"user1": {User: "user1", Roles: []string{"role1"}},
-		"user2": {User: "user2", Roles: []string{"role2"}},
+	casbinAuth := NewCasbinAuth(modelPath, policyPath, Users{
+		"user1": {Roles: []string{"role1"}},
+		"user2": {Roles: []string{"role2"}},
 	})
 
 	// Test with user1 and GET on dare-db
@@ -49,9 +49,9 @@ func TestHasPermission(t *testing.T) {
 }
 
 func TestUnknownUser(t *testing.T) {
-	casbinAuth := NewCasbinAuth(modelPath, policyPath, map[string]User{
-		"user1": {User: "user1", Roles: []string{"role1"}},
-		"user2": {User: "user2", Roles: []string{"role2"}},
+	casbinAuth := NewCasbinAuth(modelPath, policyPath, Users{
+		"user1": {Roles: []string{"role1"}},
+		"user2": {Roles: []string{"role2"}},
 	})
 
 	// Test with unknown user
@@ -61,9 +61,9 @@ func TestUnknownUser(t *testing.T) {
 
 func TestMiddleware(t *testing.T) {
 
-	casbinAuth := NewCasbinAuth(modelPath, policyPath, map[string]User{
-		"user1": {User: "user1", Roles: []string{"role1"}},
-		"user2": {User: "user2", Roles: []string{"role2"}},
+	casbinAuth := NewCasbinAuth(modelPath, policyPath, Users{
+		"user1": {Roles: []string{"role1"}},
+		"user2": {Roles: []string{"role2"}},
 	})
 
 	middleware := NewCasbinMiddleware(casbinAuth)

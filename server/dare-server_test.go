@@ -115,8 +115,8 @@ func TestCreateMux(t *testing.T) {
 	srv := NewDareServer(db)
 
 	// Create a new ServeMux using the CreateMux method
-	mux := srv.CreateMux(auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", map[string]auth.User{
-		"user1": {User: "user1", Roles: []string{"role1"}}, "user2": {User: "user2", Roles: []string{"role2"}},
+	mux := srv.CreateMux(auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", auth.Users{
+		"user1": {Roles: []string{"role1"}}, "user2": {Roles: []string{"role2"}},
 	}))
 	assert.Equal(t, mux != nil, true)
 }
@@ -124,8 +124,8 @@ func TestCreateMux(t *testing.T) {
 func TestMiddleware_ProtectedEndpoints(t *testing.T) {
 	db := database.NewDatabase()
 	srv := NewDareServer(db)
-	mux := srv.CreateMux(auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", map[string]auth.User{
-		"user1": {User: "user1", Roles: []string{"role1"}}, "user2": {User: "user2", Roles: []string{"role2"}},
+	mux := srv.CreateMux(auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", auth.Users{
+		"user1": {Roles: []string{"role1"}}, "user2": {Roles: []string{"role2"}},
 	}))
 
 	// Test POST request for a protected resource

@@ -3,31 +3,39 @@ package auth
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/casbin/casbin"
 	"github.com/dmarro89/dare-db/logger"
 )
+
+const GUEST_USER = "guest"
+const GUEST_ROLE = "guest"
 
 type Authorizer interface {
 	HasPermission(userID, action, asset string) bool
 }
 
 type User struct {
-	User  string
 	Roles []string
 }
 
+type Users map[string]*User
+
 type CasbinAuth struct {
-	users    map[string]User
+	users    Users
 	enforcer *casbin.Enforcer
 	logger   logger.Logger
 }
 
-func NewCasbinAuth(modelPath, policyPath string, users map[string]User) *CasbinAuth {
+func NewCasbinAuth(modelPath, policyPath string, users Users) *CasbinAuth {
 	if users == nil {
-		users = map[string]User{"guest": {User: "guest", Roles: []string{"guest"}}}
+		users = Users{GUEST_USER: {Roles: []string{GUEST_ROLE}}}
 	}
-	enforcer := casbin.NewEnforcer(modelPath, policyPath)
+	enforcer, err := casbin.NewEnforcerSafe(modelPath, policyPath)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to create Casbin enforcer: %v", err))
+	}
 	return &CasbinAuth{
 		users:    users,
 		enforcer: enforcer,
@@ -44,12 +52,12 @@ func (a *CasbinAuth) HasPermission(userID, action, asset string) bool {
 
 	for _, role := range user.Roles {
 		if a.enforcer.Enforce(role, asset, action) {
-			a.logger.Info(fmt.Printf("User '%s' is allowed to '%s' resource '%s'", userID, action, asset))
+			a.logger.Info(fmt.Sprintf("User '%s' is allowed to '%s' resource '%s'", userID, action, asset))
 			return true
 		}
 	}
 
-	a.logger.Info(fmt.Printf(`User %s is not allowed to %s resource %s`, userID, action, asset))
+	a.logger.Info(fmt.Sprintf("User %s is not allowed to %s resource %s", userID, action, asset))
 	return false
 }
 
@@ -70,19 +78,32 @@ func (middleware *Middleware) HandleFunc(next http.HandlerFunc) http.HandlerFunc
 		username, _, ok := r.BasicAuth()
 		if !ok {
 			middleware.logger.Info("Missing or invalid credentials")
-			w.WriteHeader(http.StatusUnauthorized)
+			http.Error(w, "Unauthorized: missing or invalid credentials", http.StatusUnauthorized)
 			return
 		}
-		asset := r.PathValue("asset")
-		if asset == "" {
-			asset = "dare-db"
-		}
+
+		asset := middleware.extractAssetFromPath(r.URL.Path)
+
+		middleware.logger.Info(fmt.Sprintf("User %s is requesting %s resource %s", username, r.Method, asset))
 		if !middleware.authorizer.HasPermission(username, r.Method, asset) {
-			middleware.logger.Info(fmt.Printf(`User %s is not allowed to %s resource %s`, username, r.Method, asset))
-			w.WriteHeader(http.StatusForbidden)
+			middleware.logger.Info(fmt.Sprintf("User %s is not allowed to %s resource %s", username, r.Method, asset))
+			http.Error(w, "Forbidden: you do not have permission to access this resource", http.StatusForbidden)
 			return
 		}
 
 		next(w, r)
 	})
+}
+
+func (middleware *Middleware) extractAssetFromPath(path string) string {
+	if strings.HasPrefix(path, "/get/") {
+		return strings.TrimPrefix(path, "/get/")
+	}
+	if strings.HasPrefix(path, "/delete/") {
+		return strings.TrimPrefix(path, "/delete/")
+	}
+	if path == "/set" {
+		return "set"
+	}
+	return "dare-db"
 }

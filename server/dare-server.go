@@ -10,6 +10,8 @@ import (
 )
 
 const KEY_PARAM = "key"
+const DEFAULT_USER = "user"
+const DEFAULT_ROLE = "user"
 
 type IDare interface {
 	CreateMux(*auth.CasbinAuth) *http.ServeMux
@@ -28,9 +30,9 @@ func NewDareServer(db *database.Database) *DareServer {
 	}
 }
 
-func getDefaultAuth() *auth.CasbinAuth {
-	return auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", map[string]auth.User{
-		"user": {User: "user", Roles: []string{"user"}},
+func (srv *DareServer) getDefaultAuth() *auth.CasbinAuth {
+	return auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", auth.Users{
+		DEFAULT_USER: {Roles: []string{DEFAULT_ROLE}},
 	})
 }
 
@@ -38,13 +40,14 @@ func (srv *DareServer) CreateMux(casbinAuth *auth.CasbinAuth) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	if casbinAuth == nil {
-		casbinAuth = getDefaultAuth()
+		casbinAuth = srv.getDefaultAuth()
 	}
 
 	middleware := auth.NewCasbinMiddleware(casbinAuth)
-	mux.HandleFunc("GET /get/{key}", middleware.HandleFunc(srv.HandlerGetById))
+	mux.HandleFunc(
+		fmt.Sprintf(`GET /get/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerGetById))
 	mux.HandleFunc("POST /set", middleware.HandleFunc(srv.HandlerSet))
-	mux.HandleFunc("DELETE /delete/{key}", middleware.HandleFunc(srv.HandlerDelete))
+	mux.HandleFunc(fmt.Sprintf(`DELETE /delete/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerDelete))
 	return mux
 }
 
