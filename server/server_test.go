@@ -25,7 +25,7 @@ type MockDareServer struct {
 	mock.Mock
 }
 
-func (ds *MockDareServer) CreateMux(*auth.CasbinAuth) *http.ServeMux {
+func (ds *MockDareServer) CreateMux(auth.Authorizer, auth.Authenticator) *http.ServeMux {
 	args := ds.Called()
 	return args.Get(0).(*http.ServeMux)
 }

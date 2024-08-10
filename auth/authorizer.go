@@ -62,24 +62,32 @@ func (a *CasbinAuth) HasPermission(userID, action, asset string) bool {
 }
 
 type Middleware struct {
-	authorizer Authorizer
-	logger     logger.Logger
+	authorizer    Authorizer
+	authenticator Authenticator
+	logger        logger.Logger
 }
 
-func NewCasbinMiddleware(casbinAuth *CasbinAuth) *Middleware {
+func NewCasbinMiddleware(casbinAuth Authorizer, authenticator Authenticator) *Middleware {
 	return &Middleware{
-		authorizer: casbinAuth,
-		logger:     logger.NewDareLogger(),
+		authorizer:    casbinAuth,
+		authenticator: authenticator,
+		logger:        logger.NewDareLogger(),
 	}
 }
 
 func (middleware *Middleware) HandleFunc(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, _, ok := r.BasicAuth()
-		if !ok {
-			middleware.logger.Info("Missing or invalid credentials")
-			http.Error(w, "Unauthorized: missing or invalid credentials", http.StatusUnauthorized)
+		tokenStr := r.Header.Get("Authorization")
+		if tokenStr == "" {
+			middleware.logger.Info("Missing authorization token")
+			http.Error(w, "Unauthorized: missing authorization token", http.StatusUnauthorized)
 			return
+		}
+
+		username, err := middleware.authenticator.VerifyToken(tokenStr)
+		if err != nil {
+			middleware.logger.Error(fmt.Sprintf("Invalid authorization token: %v", err))
+			http.Error(w, "Unauthorized: invalid authorization token", http.StatusUnauthorized)
 		}
 
 		asset := middleware.extractAssetFromPath(r.URL.Path)

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/casbin/casbin"
+	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/logger"
 )
 
@@ -45,7 +46,7 @@ func (server *HttpServer) Start() {
 
 	server.httpServer = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
-		Handler: server.dareServer.CreateMux(nil),
+		Handler: server.dareServer.CreateMux(nil, auth.NewJWTAutenticator()),
 	}
 
 	go func() {
@@ -94,7 +95,7 @@ func NewHttpsServer(dareServer IDare, configuration Config, logger logger.Logger
 func (server *HttpsServer) Start() {
 	server.httpsServer = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
-		Handler: server.dareServer.CreateMux(nil),
+		Handler: server.dareServer.CreateMux(nil, auth.NewJWTAutenticator()),
 	}
 
 	go func() {

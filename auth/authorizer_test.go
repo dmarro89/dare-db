@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/dmarro89/dare-db/logger"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,13 +62,21 @@ func TestUnknownUser(t *testing.T) {
 }
 
 func TestMiddleware(t *testing.T) {
-
 	casbinAuth := NewCasbinAuth(modelPath, policyPath, Users{
 		"user1": {Roles: []string{"role1"}},
 		"user2": {Roles: []string{"role2"}},
 	})
 
-	middleware := NewCasbinMiddleware(casbinAuth)
+	userStore := NewUserStore()
+	authenticator := &JWTAutenticator{
+		usersStore: userStore,
+	}
+
+	middleware := &Middleware{
+		authorizer:    casbinAuth,
+		authenticator: authenticator,
+		logger:        logger.NewDareLogger(),
+	}
 
 	handler := middleware.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -75,7 +85,11 @@ func TestMiddleware(t *testing.T) {
 	// Test case where user1 is authorized for GET
 	req, err := http.NewRequest("GET", "/some-path", nil)
 	require.NoError(t, err)
-	req.SetBasicAuth("user1", "")
+
+	token, err := middleware.authenticator.GenerateToken("user1")
+	assert.Nil(t, err)
+	userStore.SaveToken("user1", token)
+	req.Header.Set("Authorization", token)
 
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -85,7 +99,7 @@ func TestMiddleware(t *testing.T) {
 	// Test case where user1 is not authorized for POST
 	req, err = http.NewRequest("POST", "/some-path", nil)
 	require.NoError(t, err)
-	req.SetBasicAuth("user1", "")
+	req.Header.Set("Authorization", token)
 
 	rr = httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -95,7 +109,10 @@ func TestMiddleware(t *testing.T) {
 	// Test case where user2 is authorized for POST
 	req, err = http.NewRequest("POST", "/some-path", nil)
 	require.NoError(t, err)
-	req.SetBasicAuth("user2", "")
+	token, err = middleware.authenticator.GenerateToken("user2")
+	assert.Nil(t, err)
+	userStore.SaveToken("user2", token)
+	req.Header.Set("Authorization", token)
 
 	rr = httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -105,7 +122,7 @@ func TestMiddleware(t *testing.T) {
 	// Test case where user2 is not authorized for GET
 	req, err = http.NewRequest("GET", "/some-path", nil)
 	require.NoError(t, err)
-	req.SetBasicAuth("user2", "")
+	req.Header.Set("Authorization", token)
 
 	rr = httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
