@@ -209,7 +209,7 @@ func TestMiddleware_ProtectedEndpoints(t *testing.T) {
 func TestDareServer_HandlerLogin(t *testing.T) {
 	usersStore := auth.NewUserStore()
 	server := &DareServer{
-		usersStore: usersStore,
+		userStore: usersStore,
 	}
 
 	// Adding a test user

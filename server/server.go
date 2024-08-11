@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/casbin/casbin"
 	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/logger"
 )
@@ -26,7 +25,6 @@ type HttpServer struct {
 	configuration Config
 	sigChan       chan os.Signal
 	logger        logger.Logger
-	enf           *casbin.Enforcer
 }
 
 func NewHttpServer(dareServer IDare, configuration Config, logger logger.Logger) *HttpServer {
@@ -35,7 +33,6 @@ func NewHttpServer(dareServer IDare, configuration Config, logger logger.Logger)
 		configuration: configuration,
 		sigChan:       make(chan os.Signal, 1),
 		logger:        logger,
-		enf:           casbin.NewEnforcer("../auth/rbac_model.conf", "../auth/rbac_policy.csv"),
 	}
 }
 
@@ -46,7 +43,7 @@ func (server *HttpServer) Start() {
 
 	server.httpServer = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
-		Handler: server.dareServer.CreateMux(nil, auth.NewJWTAutenticator()),
+		Handler: server.dareServer.CreateMux(nil, nil),
 	}
 
 	go func() {
@@ -95,7 +92,7 @@ func NewHttpsServer(dareServer IDare, configuration Config, logger logger.Logger
 func (server *HttpsServer) Start() {
 	server.httpsServer = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
-		Handler: server.dareServer.CreateMux(nil, auth.NewJWTAutenticator()),
+		Handler: server.dareServer.CreateMux(auth.GetDefaultAuth(), auth.NewJWTAutenticator()),
 	}
 
 	go func() {

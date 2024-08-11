@@ -10,42 +10,39 @@ import (
 )
 
 const KEY_PARAM = "key"
-const DEFAULT_USER = "user"
-const DEFAULT_ROLE = "user"
 
 type IDare interface {
 	CreateMux(auth.Authorizer, auth.Authenticator) *http.ServeMux
 	HandlerGetById(w http.ResponseWriter, r *http.Request)
 	HandlerSet(w http.ResponseWriter, r *http.Request)
 	HandlerDelete(w http.ResponseWriter, r *http.Request)
+	HandlerLogin(w http.ResponseWriter, r *http.Request)
 }
 
 type DareServer struct {
-	db         *database.Database
-	usersStore *auth.UserStore
+	db        *database.Database
+	userStore *auth.UserStore
 }
 
-func NewDareServer(db *database.Database, usersStore *auth.UserStore) *DareServer {
+func NewDareServer(db *database.Database, userStore *auth.UserStore) *DareServer {
 	return &DareServer{
-		db:         db,
-		usersStore: usersStore,
+		db:        db,
+		userStore: userStore,
 	}
 }
 
-func (srv *DareServer) getDefaultAuth() *auth.CasbinAuth {
-	return auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", auth.Users{
-		DEFAULT_USER: {Roles: []string{DEFAULT_ROLE}},
-	})
-}
-
-func (srv *DareServer) CreateMux(casbinAuth auth.Authorizer, authenticator auth.Authenticator) *http.ServeMux {
+func (srv *DareServer) CreateMux(authorizer auth.Authorizer, authenticator auth.Authenticator) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	if casbinAuth == nil {
-		casbinAuth = srv.getDefaultAuth()
+	if authorizer == nil {
+		authorizer = auth.GetDefaultAuth()
 	}
 
-	middleware := auth.NewCasbinMiddleware(casbinAuth, authenticator)
+	if authenticator == nil {
+		authenticator = auth.NewJWTAutenticatorWithUsers(srv.userStore)
+	}
+
+	middleware := auth.NewCasbinMiddleware(authorizer, authenticator)
 	mux.HandleFunc(
 		fmt.Sprintf(`GET /get/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerGetById))
 	mux.HandleFunc("POST /set", middleware.HandleFunc(srv.HandlerSet))
@@ -135,14 +132,14 @@ func (srv *DareServer) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username, password, ok := r.BasicAuth()
-	if !ok || !srv.usersStore.ValidateCredentials(username, password) {
+	if !ok || !srv.userStore.ValidateCredentials(username, password) {
 		http.Error(w, "Unauthorized: missing or invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	authenticator := auth.NewJWTAutenticatorWithUsers(srv.usersStore)
+	authenticator := auth.NewJWTAutenticatorWithUsers(srv.userStore)
 	token, _ := authenticator.GenerateToken(username)
-	srv.usersStore.SaveToken(username, token)
+	srv.userStore.SaveToken(username, token)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -152,5 +149,4 @@ func (srv *DareServer) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
 	}
-
 }

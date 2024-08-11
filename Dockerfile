@@ -16,6 +16,10 @@ RUN apt-get update && apt-get install -y curl netcat
 ENV DARE_TLS_ENABLED="false"
 RUN mkdir /app
 WORKDIR /app
+
+COPY auth/rbac_model.conf /app/auth/rbac_model.conf
+COPY auth/rbac_policy.csv /app/auth/rbac_policy.csv
+
 COPY --from=builder /app/app .
 
 EXPOSE 2605

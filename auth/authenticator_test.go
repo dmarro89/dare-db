@@ -9,14 +9,18 @@ import (
 )
 
 func TestGenerateToken(t *testing.T) {
-	authenticator := NewJWTAutenticator()
+	jwtKey := getJWTKey()
+	authenticator := &JWTAutenticator{
+		usersStore: NewUserStore(),
+		jwtKey:     jwtKey,
+	}
+
 	username := "testuser"
 
 	token, err := authenticator.GenerateToken(username)
 	assert.NoError(t, err, "Expected no error when generating token")
 	assert.NotEmpty(t, token, "Expected a token, got an empty string")
 
-	// Optional: Parse the token to verify it's correctly formatted
 	claims := &Claims{}
 	parsedToken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return jwtKey, nil
@@ -29,8 +33,10 @@ func TestGenerateToken(t *testing.T) {
 
 func TestJWTAuthenticator_VerifyToken(t *testing.T) {
 	userStore := NewUserStore()
+	jwtKey := getJWTKey()
 	authenticator := &JWTAutenticator{
 		usersStore: userStore,
+		jwtKey:     jwtKey,
 	}
 
 	username := "testuser"
@@ -78,5 +84,6 @@ func generateExpiredToken(username string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
+	jwtKey := getJWTKey()
 	return token.SignedString(jwtKey)
 }

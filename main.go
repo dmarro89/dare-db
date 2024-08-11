@@ -11,7 +11,9 @@ func main() {
 	logger := logger.NewDareLogger()
 	configuration := server.NewConfiguration("")
 	database := database.NewDatabase()
-	dareServer := server.NewDareServer(database, auth.NewUserStore())
+	userStore := auth.NewUserStore()
+	userStore.AddUser("admin", "password")
+	dareServer := server.NewDareServer(database, userStore)
 	server := server.NewFactory(configuration, logger).GetWebServer(dareServer)
 
 	server.Start()

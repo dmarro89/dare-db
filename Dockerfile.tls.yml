@@ -39,6 +39,9 @@ ENV DARE_CERT_PUBLIC=/app/settings/cert_public.pem
 
 WORKDIR /app
 
+COPY auth/rbac_model.conf /app/auth/rbac_model.conf
+COPY auth/rbac_policy.csv /app/auth/rbac_policy.csv
+
 COPY --from=builder /app/app .
 
 COPY --from=tls-cert-gen /ssl/settings/cert_private.pem /app/settings/cert_private.pem

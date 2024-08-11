@@ -36,6 +36,8 @@ func (ds *MockDareServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
 }
 func (ds *MockDareServer) HandlerDelete(w http.ResponseWriter, r *http.Request) {
 }
+func (ds *MockDareServer) HandlerLogin(w http.ResponseWriter, r *http.Request) {
+}
 
 func TestNewHttpServer(t *testing.T) {
 	server := NewHttpServer(&MockDareServer{}, NewConfiguration(""), logger.NewDareLogger())
