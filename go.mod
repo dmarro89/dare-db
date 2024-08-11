@@ -4,16 +4,14 @@ go 1.22.3
 
 require (
 	github.com/dmarro89/go-redis-hashtable v0.0.4
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	gotest.tools v2.2.0+incompatible
 )
 
-require (
-	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
-)
+require github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 
 require (
 	github.com/casbin/casbin v1.9.1
