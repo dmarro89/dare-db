@@ -14,6 +14,9 @@ const GUEST_ROLE = "guest"
 const DEFAULT_USER = "admin"
 const DEFAULT_ROLE = "admin"
 
+const RBAC_CONFIG_FILE = "auth/rbac_model.conf"
+const RBAC_POLICY_FILE = "auth/rbac_policy.csv"
+
 type Authorizer interface {
 	HasPermission(userID, action, asset string) bool
 }
@@ -68,8 +71,9 @@ func GetDefaultAuth() *CasbinAuth {
 	if err != nil {
 		panic("Failed to get current working directory: " + err.Error())
 	}
-	modelPath := filepath.Join(dir, "auth/rbac_model.conf")
-	policyPath := filepath.Join(dir, "auth/rbac_policy.csv")
+
+	modelPath := filepath.Join(dir, RBAC_CONFIG_FILE)
+	policyPath := filepath.Join(dir, RBAC_POLICY_FILE)
 
 	return NewCasbinAuth(modelPath, policyPath, Users{
 		DEFAULT_USER: {Roles: []string{DEFAULT_ROLE}},

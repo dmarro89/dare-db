@@ -65,7 +65,7 @@ func (c *ViperConfig) createDefaultConfigFile(cfgFile string) {
 
 	c.viper.WriteConfigAs(cfgFile)
 
-	c.logger.Info("\nIMPORTANT! Generate default password for admin on initial start. Store it securely. Password: %v\n\n", passwordNew)
+	c.logger.Info("\n\nIMPORTANT! Generate default password for admin on initial start. Store it securely. Password: ", passwordNew, "\n")
 }
 
 func (c *ViperConfig) mappingEnvsToConfig() {

@@ -1,4 +1,4 @@
-FROM golang:1.22-bullseye as builder
+FROM golang:1.22-bullseye AS builder
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN openssl req \
     -subj "/C=EU/ST=Earth/L=Earth/O=DareDB/OU=DareDB/CN=localhost"
 
 # handle database
-FROM ubuntu:22.04 as dare-db-tls
+FROM ubuntu:22.04 AS dare-db-tls
 
 RUN mkdir /app
 RUN mkdir -p /app/settings
