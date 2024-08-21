@@ -10,44 +10,44 @@ import (
 )
 
 const KEY_PARAM = "key"
-const DEFAULT_USER = "user"
-const DEFAULT_ROLE = "user"
 
 type IDare interface {
-	CreateMux(*auth.CasbinAuth) *http.ServeMux
+	CreateMux(auth.Authorizer, auth.Authenticator) *http.ServeMux
 	HandlerGetById(w http.ResponseWriter, r *http.Request)
 	HandlerSet(w http.ResponseWriter, r *http.Request)
 	HandlerDelete(w http.ResponseWriter, r *http.Request)
+	HandlerLogin(w http.ResponseWriter, r *http.Request)
 }
 
 type DareServer struct {
-	db *database.Database
+	db        *database.Database
+	userStore *auth.UserStore
 }
 
-func NewDareServer(db *database.Database) *DareServer {
+func NewDareServer(db *database.Database, userStore *auth.UserStore) *DareServer {
 	return &DareServer{
-		db: db,
+		db:        db,
+		userStore: userStore,
 	}
 }
 
-func (srv *DareServer) getDefaultAuth() *auth.CasbinAuth {
-	return auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", auth.Users{
-		DEFAULT_USER: {Roles: []string{DEFAULT_ROLE}},
-	})
-}
-
-func (srv *DareServer) CreateMux(casbinAuth *auth.CasbinAuth) *http.ServeMux {
+func (srv *DareServer) CreateMux(authorizer auth.Authorizer, authenticator auth.Authenticator) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	if casbinAuth == nil {
-		casbinAuth = srv.getDefaultAuth()
+	if authorizer == nil {
+		authorizer = auth.GetDefaultAuth()
 	}
 
-	middleware := auth.NewCasbinMiddleware(casbinAuth)
+	if authenticator == nil {
+		authenticator = auth.NewJWTAutenticatorWithUsers(srv.userStore)
+	}
+
+	middleware := auth.NewCasbinMiddleware(authorizer, authenticator)
 	mux.HandleFunc(
 		fmt.Sprintf(`GET /get/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerGetById))
 	mux.HandleFunc("POST /set", middleware.HandleFunc(srv.HandlerSet))
 	mux.HandleFunc(fmt.Sprintf(`DELETE /delete/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerDelete))
+	mux.HandleFunc("POST /login", srv.HandlerLogin)
 	return mux
 }
 
@@ -123,4 +123,34 @@ func (srv *DareServer) HandlerDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (srv *DareServer) HandlerLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	username, password, ok := r.BasicAuth()
+	if !ok || !srv.userStore.ValidateCredentials(username, password) {
+		http.Error(w, "Unauthorized: missing or invalid credentials", http.StatusUnauthorized)
+		return
+	}
+
+	authenticator := auth.NewJWTAutenticatorWithUsers(srv.userStore)
+	token, err := authenticator.GenerateToken(username)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+	srv.userStore.SaveToken(username, token)
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(map[string]string{
+		"token": token,
+	})
+	if err != nil {
+		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
+	}
 }

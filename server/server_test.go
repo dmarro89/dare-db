@@ -25,7 +25,7 @@ type MockDareServer struct {
 	mock.Mock
 }
 
-func (ds *MockDareServer) CreateMux(*auth.CasbinAuth) *http.ServeMux {
+func (ds *MockDareServer) CreateMux(auth.Authorizer, auth.Authenticator) *http.ServeMux {
 	args := ds.Called()
 	return args.Get(0).(*http.ServeMux)
 }
@@ -35,6 +35,8 @@ func (ds *MockDareServer) HandlerGetById(w http.ResponseWriter, r *http.Request)
 func (ds *MockDareServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
 }
 func (ds *MockDareServer) HandlerDelete(w http.ResponseWriter, r *http.Request) {
+}
+func (ds *MockDareServer) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestNewHttpServer(t *testing.T) {

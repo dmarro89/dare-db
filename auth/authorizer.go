@@ -2,8 +2,8 @@ package auth
 
 import (
 	"fmt"
-	"net/http"
-	"strings"
+	"os"
+	"path/filepath"
 
 	"github.com/casbin/casbin"
 	"github.com/dmarro89/dare-db/logger"
@@ -11,6 +11,8 @@ import (
 
 const GUEST_USER = "guest"
 const GUEST_ROLE = "guest"
+const DEFAULT_USER = "admin"
+const DEFAULT_ROLE = "admin"
 
 type Authorizer interface {
 	HasPermission(userID, action, asset string) bool
@@ -61,49 +63,15 @@ func (a *CasbinAuth) HasPermission(userID, action, asset string) bool {
 	return false
 }
 
-type Middleware struct {
-	authorizer Authorizer
-	logger     logger.Logger
-}
-
-func NewCasbinMiddleware(casbinAuth *CasbinAuth) *Middleware {
-	return &Middleware{
-		authorizer: casbinAuth,
-		logger:     logger.NewDareLogger(),
+func GetDefaultAuth() *CasbinAuth {
+	dir, err := os.Getwd()
+	if err != nil {
+		panic("Failed to get current working directory: " + err.Error())
 	}
-}
+	modelPath := filepath.Join(dir, "auth/rbac_model.conf")
+	policyPath := filepath.Join(dir, "auth/rbac_policy.csv")
 
-func (middleware *Middleware) HandleFunc(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, _, ok := r.BasicAuth()
-		if !ok {
-			middleware.logger.Info("Missing or invalid credentials")
-			http.Error(w, "Unauthorized: missing or invalid credentials", http.StatusUnauthorized)
-			return
-		}
-
-		asset := middleware.extractAssetFromPath(r.URL.Path)
-
-		middleware.logger.Info(fmt.Sprintf("User %s is requesting %s resource %s", username, r.Method, asset))
-		if !middleware.authorizer.HasPermission(username, r.Method, asset) {
-			middleware.logger.Info(fmt.Sprintf("User %s is not allowed to %s resource %s", username, r.Method, asset))
-			http.Error(w, "Forbidden: you do not have permission to access this resource", http.StatusForbidden)
-			return
-		}
-
-		next(w, r)
+	return NewCasbinAuth(modelPath, policyPath, Users{
+		DEFAULT_USER: {Roles: []string{DEFAULT_ROLE}},
 	})
-}
-
-func (middleware *Middleware) extractAssetFromPath(path string) string {
-	if strings.HasPrefix(path, "/get/") {
-		return strings.TrimPrefix(path, "/get/")
-	}
-	if strings.HasPrefix(path, "/delete/") {
-		return strings.TrimPrefix(path, "/delete/")
-	}
-	if path == "/set" {
-		return "set"
-	}
-	return "dare-db"
 }
