@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/logger"
 )
 
@@ -92,7 +91,7 @@ func NewHttpsServer(dareServer IDare, configuration Config, logger logger.Logger
 func (server *HttpsServer) Start() {
 	server.httpsServer = &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", server.configuration.GetString("server.host"), server.configuration.GetString("server.port")),
-		Handler: server.dareServer.CreateMux(auth.GetDefaultAuth(), auth.NewJWTAutenticator()),
+		Handler: server.dareServer.CreateMux(nil, nil),
 	}
 
 	go func() {

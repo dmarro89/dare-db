@@ -138,12 +138,16 @@ func (srv *DareServer) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	authenticator := auth.NewJWTAutenticatorWithUsers(srv.userStore)
-	token, _ := authenticator.GenerateToken(username)
+	token, err := authenticator.GenerateToken(username)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
 	srv.userStore.SaveToken(username, token)
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(map[string]string{
+	err = json.NewEncoder(w).Encode(map[string]string{
 		"token": token,
 	})
 	if err != nil {

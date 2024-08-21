@@ -36,7 +36,8 @@ func TestMiddleware(t *testing.T) {
 	require.NoError(t, err)
 
 	token, err := middleware.authenticator.GenerateToken("user1")
-	assert.Nil(t, err)
+	require.NoError(t, err)
+	assert.NotNil(t, token)
 	userStore.SaveToken("user1", token)
 	req.Header.Set("Authorization", token)
 
