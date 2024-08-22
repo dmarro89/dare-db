@@ -12,8 +12,7 @@ func main() {
 	configuration := server.NewConfiguration("")
 	database := database.NewDatabase()
 	userStore := auth.NewUserStore()
-	userStore.AddUser("admin", "password")
-	logger.Info("Addedd default user 'admin' with password 'password'")
+	userStore.AddUser(configuration.GetString("admin_user"), configuration.GetString("admin_password"))
 	dareServer := server.NewDareServer(database, userStore)
 	server := server.NewFactory(configuration, logger).GetWebServer(dareServer)
 
