@@ -3,6 +3,7 @@ package auth
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/dmarro89/dare-db/logger"
@@ -11,7 +12,33 @@ import (
 )
 
 func TestMiddleware(t *testing.T) {
-	casbinAuth := NewCasbinAuth(modelPath, policyPath, Users{
+	modelFile, err := os.CreateTemp("", "rbac_model.conf")
+	if err != nil {
+		t.Fatalf("Error creating rbac model file: %v", err)
+	}
+	defer os.Remove(modelFile.Name())
+
+	policyFile, err := os.CreateTemp("", "rbac_policy.csv")
+	if err != nil {
+		t.Fatalf("Error creating rbac policy file: %v", err)
+	}
+	defer os.Remove(policyFile.Name())
+
+	if _, err := modelFile.Write([]byte(RBAC_MODEL_CONTENT)); err != nil {
+		t.Fatalf("Errorwriting rbac model file: %v", err)
+	}
+	if err := modelFile.Close(); err != nil {
+		t.Fatalf("Error closing rbac model file: %v", err)
+	}
+
+	if _, err := policyFile.Write([]byte(RBAC_POLICY)); err != nil {
+		t.Fatalf("Error creating policy file: %v", err)
+	}
+	if err := policyFile.Close(); err != nil {
+		t.Fatalf("Error closing policy file: %v", err)
+	}
+
+	casbinAuth := NewCasbinAuth(modelFile.Name(), policyFile.Name(), Users{
 		"user1": {Roles: []string{"role1"}},
 		"user2": {Roles: []string{"role2"}},
 	})

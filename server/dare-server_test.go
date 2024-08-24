@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/dmarro89/dare-db/auth"
@@ -109,19 +110,94 @@ func TestServer_SetAndDelete(t *testing.T) {
 	}
 }
 
+const RBAC_MODEL_CONTENT = `[request_definition]
+r = sub, obj, act
+
+[policy_definition]
+p = sub, obj, act
+
+[role_definition]
+g = _, _
+
+[policy_effect]
+e = some(where (p.eft == allow))
+
+[matchers]
+m = g(r.sub, p.sub) && (p.obj == "*" || keyMatch(r.obj, p.obj)) && regexMatch(r.act, p.act)
+`
+
+const RBAC_POLICY = `p, role1, *, GET
+p, role2, *, POST
+
+g, user1, role1
+g, user2, role2
+`
+
 func TestCreateMux(t *testing.T) {
+	modelFile, err := os.CreateTemp("", "rbac_model.conf")
+	if err != nil {
+		t.Fatalf("Error creating rbac model file: %v", err)
+	}
+	defer os.Remove(modelFile.Name())
+
+	policyFile, err := os.CreateTemp("", "rbac_policy.csv")
+	if err != nil {
+		t.Fatalf("Error creating rbac policy file: %v", err)
+	}
+	defer os.Remove(policyFile.Name())
+
+	if _, err := modelFile.Write([]byte(RBAC_MODEL_CONTENT)); err != nil {
+		t.Fatalf("Errorwriting rbac model file: %v", err)
+	}
+	if err := modelFile.Close(); err != nil {
+		t.Fatalf("Error closing rbac model file: %v", err)
+	}
+
+	if _, err := policyFile.Write([]byte(RBAC_POLICY)); err != nil {
+		t.Fatalf("Error creating policy file: %v", err)
+	}
+	if err := policyFile.Close(); err != nil {
+		t.Fatalf("Error closing policy file: %v", err)
+	}
+
 	// Create a new instance of DareServer
 	db := database.NewDatabase()
 	srv := NewDareServer(db, auth.NewUserStore())
 
 	// Create a new ServeMux using the CreateMux method
-	mux := srv.CreateMux(auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", auth.Users{
+	mux := srv.CreateMux(auth.NewCasbinAuth(modelFile.Name(), policyFile.Name(), auth.Users{
 		"user1": {Roles: []string{"role1"}}, "user2": {Roles: []string{"role2"}},
 	}), auth.NewJWTAutenticator())
 	assert.Equal(t, mux != nil, true)
 }
 
 func TestMiddleware_ProtectedEndpoints(t *testing.T) {
+	modelFile, err := os.CreateTemp("", "rbac_model.conf")
+	if err != nil {
+		t.Fatalf("Error creating rbac model file: %v", err)
+	}
+	defer os.Remove(modelFile.Name())
+
+	policyFile, err := os.CreateTemp("", "rbac_policy.csv")
+	if err != nil {
+		t.Fatalf("Error creating rbac policy file: %v", err)
+	}
+	defer os.Remove(policyFile.Name())
+
+	if _, err := modelFile.Write([]byte(RBAC_MODEL_CONTENT)); err != nil {
+		t.Fatalf("Errorwriting rbac model file: %v", err)
+	}
+	if err := modelFile.Close(); err != nil {
+		t.Fatalf("Error closing rbac model file: %v", err)
+	}
+
+	if _, err := policyFile.Write([]byte(RBAC_POLICY)); err != nil {
+		t.Fatalf("Error creating policy file: %v", err)
+	}
+	if err := policyFile.Close(); err != nil {
+		t.Fatalf("Error closing policy file: %v", err)
+	}
+
 	db := database.NewDatabase()
 
 	usersStore := auth.NewUserStore()
@@ -131,7 +207,7 @@ func TestMiddleware_ProtectedEndpoints(t *testing.T) {
 	srv := NewDareServer(db, usersStore)
 
 	authenticator := auth.NewJWTAutenticatorWithUsers(usersStore)
-	mux := srv.CreateMux(auth.NewCasbinAuth("../auth/test/rbac_model.conf", "../auth/test/rbac_policy.csv", auth.Users{
+	mux := srv.CreateMux(auth.NewCasbinAuth(modelFile.Name(), policyFile.Name(), auth.Users{
 		"user1": {Roles: []string{"role1"}}, "user2": {Roles: []string{"role2"}},
 	}), authenticator)
 

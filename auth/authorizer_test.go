@@ -1,16 +1,62 @@
 package auth
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-const modelPath = "./test/rbac_model.conf"
-const policyPath = "./test/rbac_policy.csv"
+const RBAC_MODEL_CONTENT = `[request_definition]
+r = sub, obj, act
+
+[policy_definition]
+p = sub, obj, act
+
+[role_definition]
+g = _, _
+
+[policy_effect]
+e = some(where (p.eft == allow))
+
+[matchers]
+m = g(r.sub, p.sub) && (p.obj == "*" || keyMatch(r.obj, p.obj)) && regexMatch(r.act, p.act)
+`
+
+const RBAC_POLICY = `p, role1, *, GET
+p, role2, *, POST
+
+g, user1, role1
+g, user2, role2`
 
 func TestNewCasbinAuth(t *testing.T) {
-	casbinAuth := NewCasbinAuth(modelPath, policyPath, Users{
+	modelFile, err := os.CreateTemp("", "rbac_model.conf")
+	if err != nil {
+		t.Fatalf("Error creating rbac model file: %v", err)
+	}
+	defer os.Remove(modelFile.Name())
+
+	policyFile, err := os.CreateTemp("", "rbac_policy.csv")
+	if err != nil {
+		t.Fatalf("Error creating rbac policy file: %v", err)
+	}
+	defer os.Remove(policyFile.Name())
+
+	if _, err := modelFile.Write([]byte(RBAC_MODEL_CONTENT)); err != nil {
+		t.Fatalf("Errorwriting rbac model file: %v", err)
+	}
+	if err := modelFile.Close(); err != nil {
+		t.Fatalf("Error closing rbac model file: %v", err)
+	}
+
+	if _, err := policyFile.Write([]byte(RBAC_POLICY)); err != nil {
+		t.Fatalf("Error creating policy file: %v", err)
+	}
+	if err := policyFile.Close(); err != nil {
+		t.Fatalf("Error closing policy file: %v", err)
+	}
+
+	casbinAuth := NewCasbinAuth(modelFile.Name(), policyFile.Name(), Users{
 		"user1": {Roles: []string{"role1"}},
 		"user2": {Roles: []string{"role2"}},
 	})
@@ -21,10 +67,33 @@ func TestNewCasbinAuth(t *testing.T) {
 }
 
 func TestHasPermission(t *testing.T) {
-	modelPath := "./test/rbac_model.conf"
-	policyPath := "./test/rbac_policy.csv"
+	modelFile, err := os.CreateTemp("", "rbac_model.conf")
+	if err != nil {
+		t.Fatalf("Error creating rbac model file: %v", err)
+	}
+	defer os.Remove(modelFile.Name())
 
-	casbinAuth := NewCasbinAuth(modelPath, policyPath, Users{
+	policyFile, err := os.CreateTemp("", "rbac_policy.csv")
+	if err != nil {
+		t.Fatalf("Error creating rbac policy file: %v", err)
+	}
+	defer os.Remove(policyFile.Name())
+
+	if _, err := modelFile.Write([]byte(RBAC_MODEL_CONTENT)); err != nil {
+		t.Fatalf("Errorwriting rbac model file: %v", err)
+	}
+	if err := modelFile.Close(); err != nil {
+		t.Fatalf("Error closing rbac model file: %v", err)
+	}
+
+	if _, err := policyFile.Write([]byte(RBAC_POLICY)); err != nil {
+		t.Fatalf("Error creating policy file: %v", err)
+	}
+	if err := policyFile.Close(); err != nil {
+		t.Fatalf("Error closing policy file: %v", err)
+	}
+
+	casbinAuth := NewCasbinAuth(modelFile.Name(), policyFile.Name(), Users{
 		"user1": {Roles: []string{"role1"}},
 		"user2": {Roles: []string{"role2"}},
 	})
@@ -47,7 +116,33 @@ func TestHasPermission(t *testing.T) {
 }
 
 func TestUnknownUser(t *testing.T) {
-	casbinAuth := NewCasbinAuth(modelPath, policyPath, Users{
+	modelFile, err := os.CreateTemp("", "rbac_model.conf")
+	if err != nil {
+		t.Fatalf("Error creating rbac model file: %v", err)
+	}
+	defer os.Remove(modelFile.Name())
+
+	policyFile, err := os.CreateTemp("", "rbac_policy.csv")
+	if err != nil {
+		t.Fatalf("Error creating rbac policy file: %v", err)
+	}
+	defer os.Remove(policyFile.Name())
+
+	if _, err := modelFile.Write([]byte(RBAC_MODEL_CONTENT)); err != nil {
+		t.Fatalf("Errorwriting rbac model file: %v", err)
+	}
+	if err := modelFile.Close(); err != nil {
+		t.Fatalf("Error closing rbac model file: %v", err)
+	}
+
+	if _, err := policyFile.Write([]byte(RBAC_POLICY)); err != nil {
+		t.Fatalf("Error creating policy file: %v", err)
+	}
+	if err := policyFile.Close(); err != nil {
+		t.Fatalf("Error closing policy file: %v", err)
+	}
+
+	casbinAuth := NewCasbinAuth(modelFile.Name(), policyFile.Name(), Users{
 		"user1": {Roles: []string{"role1"}},
 		"user2": {Roles: []string{"role2"}},
 	})

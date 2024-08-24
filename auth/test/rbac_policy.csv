@@ -1,5 +1,0 @@
-p, role1, *, GET
-p, role2, *, POST
-
-g, user1, role1
-g, user2, role2
