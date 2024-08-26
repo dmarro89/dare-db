@@ -1,4 +1,4 @@
-FROM golang:1.22-bullseye as builder
+FROM golang:1.22-bullseye AS builder
 
 WORKDIR /app
 
@@ -27,7 +27,7 @@ RUN openssl req \
     -subj "/C=EU/ST=Earth/L=Earth/O=DareDB/OU=DareDB/CN=localhost"
 
 # handle database
-FROM ubuntu:22.04 as dare-db-tls
+FROM ubuntu:22.04 AS dare-db-tls
 
 RUN mkdir /app
 RUN mkdir -p /app/settings
@@ -38,6 +38,9 @@ ENV DARE_CERT_PRIVATE=/app/settings/cert_private.pem
 ENV DARE_CERT_PUBLIC=/app/settings/cert_public.pem
 
 WORKDIR /app
+
+COPY auth/rbac_model.conf /app/auth/rbac_model.conf
+COPY auth/rbac_policy.csv /app/auth/rbac_policy.csv
 
 COPY --from=builder /app/app .
 

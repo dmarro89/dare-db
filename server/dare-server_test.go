@@ -5,15 +5,18 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
+	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/database"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestServer_SetAndGet(t *testing.T) {
 	db := database.NewDatabase()
-	srv := NewDareServer(db)
+	srv := NewDareServer(db, auth.NewUserStore())
 
 	setWrongResponse := httptest.NewRecorder()
 	setWrongRequest, _ := http.NewRequest("GET", "/set", bytes.NewBuffer([]byte{}))
@@ -55,7 +58,7 @@ func TestServer_SetAndGet(t *testing.T) {
 
 	var getResult map[string]interface{}
 	err := json.Unmarshal(getResponse.Body.Bytes(), &getResult)
-	assert.NilError(t, err, "Error decoding JSON response")
+	assert.Nil(t, err, "Error decoding JSON response")
 
 	for key, value := range getResult {
 		assert.Equal(t, key, "testKey", "Unexpected response body: %v", getResult)
@@ -65,7 +68,7 @@ func TestServer_SetAndGet(t *testing.T) {
 
 func TestServer_SetAndDelete(t *testing.T) {
 	db := database.NewDatabase()
-	srv := NewDareServer(db)
+	srv := NewDareServer(db, auth.NewUserStore())
 
 	setData := map[string]interface{}{"testKey": "testValue"}
 	setDataJSON, _ := json.Marshal(setData)
@@ -107,12 +110,230 @@ func TestServer_SetAndDelete(t *testing.T) {
 	}
 }
 
+const RBAC_MODEL_CONTENT = `[request_definition]
+r = sub, obj, act
+
+[policy_definition]
+p = sub, obj, act
+
+[role_definition]
+g = _, _
+
+[policy_effect]
+e = some(where (p.eft == allow))
+
+[matchers]
+m = g(r.sub, p.sub) && (p.obj == "*" || keyMatch(r.obj, p.obj)) && regexMatch(r.act, p.act)
+`
+
+const RBAC_POLICY = `p, role1, *, GET
+p, role2, *, POST
+
+g, user1, role1
+g, user2, role2
+`
+
 func TestCreateMux(t *testing.T) {
+	modelFile, err := os.CreateTemp("", "rbac_model.conf")
+	if err != nil {
+		t.Fatalf("Error creating rbac model file: %v", err)
+	}
+	defer os.Remove(modelFile.Name())
+
+	policyFile, err := os.CreateTemp("", "rbac_policy.csv")
+	if err != nil {
+		t.Fatalf("Error creating rbac policy file: %v", err)
+	}
+	defer os.Remove(policyFile.Name())
+
+	if _, err := modelFile.Write([]byte(RBAC_MODEL_CONTENT)); err != nil {
+		t.Fatalf("Errorwriting rbac model file: %v", err)
+	}
+	if err := modelFile.Close(); err != nil {
+		t.Fatalf("Error closing rbac model file: %v", err)
+	}
+
+	if _, err := policyFile.Write([]byte(RBAC_POLICY)); err != nil {
+		t.Fatalf("Error creating policy file: %v", err)
+	}
+	if err := policyFile.Close(); err != nil {
+		t.Fatalf("Error closing policy file: %v", err)
+	}
+
 	// Create a new instance of DareServer
 	db := database.NewDatabase()
-	srv := NewDareServer(db)
+	srv := NewDareServer(db, auth.NewUserStore())
 
 	// Create a new ServeMux using the CreateMux method
-	mux := srv.CreateMux()
+	mux := srv.CreateMux(auth.NewCasbinAuth(modelFile.Name(), policyFile.Name(), auth.Users{
+		"user1": {Roles: []string{"role1"}}, "user2": {Roles: []string{"role2"}},
+	}), auth.NewJWTAutenticator())
 	assert.Equal(t, mux != nil, true)
+}
+
+func TestMiddleware_ProtectedEndpoints(t *testing.T) {
+	modelFile, err := os.CreateTemp("", "rbac_model.conf")
+	if err != nil {
+		t.Fatalf("Error creating rbac model file: %v", err)
+	}
+	defer os.Remove(modelFile.Name())
+
+	policyFile, err := os.CreateTemp("", "rbac_policy.csv")
+	if err != nil {
+		t.Fatalf("Error creating rbac policy file: %v", err)
+	}
+	defer os.Remove(policyFile.Name())
+
+	if _, err := modelFile.Write([]byte(RBAC_MODEL_CONTENT)); err != nil {
+		t.Fatalf("Errorwriting rbac model file: %v", err)
+	}
+	if err := modelFile.Close(); err != nil {
+		t.Fatalf("Error closing rbac model file: %v", err)
+	}
+
+	if _, err := policyFile.Write([]byte(RBAC_POLICY)); err != nil {
+		t.Fatalf("Error creating policy file: %v", err)
+	}
+	if err := policyFile.Close(); err != nil {
+		t.Fatalf("Error closing policy file: %v", err)
+	}
+
+	db := database.NewDatabase()
+
+	usersStore := auth.NewUserStore()
+	usersStore.AddUser("user1", "password")
+	usersStore.AddUser("user2", "password")
+
+	srv := NewDareServer(db, usersStore)
+
+	authenticator := auth.NewJWTAutenticatorWithUsers(usersStore)
+	mux := srv.CreateMux(auth.NewCasbinAuth(modelFile.Name(), policyFile.Name(), auth.Users{
+		"user1": {Roles: []string{"role1"}}, "user2": {Roles: []string{"role2"}},
+	}), authenticator)
+
+	req, err := http.NewRequest("POST", "/login", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth("user2", "password")
+
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	require.Equal(t, http.StatusOK, rr.Code)
+
+	var tokenResponse map[string]string
+	json.NewDecoder(rr.Body).Decode(&tokenResponse)
+
+	// Test POST request for a protected resource
+	postData := map[string]interface{}{"newKey": "newValue"}
+	body, err := json.Marshal(postData)
+	require.NoError(t, err)
+
+	req, err = http.NewRequest("POST", "/set", bytes.NewReader(body))
+	require.NoError(t, err)
+	req.Header.Set("Authorization", tokenResponse["token"])
+
+	rr = httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	// Check if the response status code is Created (201)
+	require.Equal(t, http.StatusCreated, rr.Code)
+
+	//Login user1
+	req, err = http.NewRequest("POST", "/login", nil)
+	require.NoError(t, err)
+	req.SetBasicAuth("user1", "password")
+
+	rr = httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+	json.NewDecoder(rr.Body).Decode(&tokenResponse)
+
+	// Test GET request for a protected resource
+	req, err = http.NewRequest("GET", "/get/newKey", nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", tokenResponse["token"])
+
+	rr = httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	// Check if the response status code is OK (200)
+	require.Equal(t, http.StatusOK, rr.Code)
+	require.Contains(t, rr.Body.String(), string(body))
+
+	// Test DELETE request for a protected resource
+	req, err = http.NewRequest("DELETE", "/delete/existingKey", nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", tokenResponse["token"])
+
+	rr = httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	// Check if the response status code is OK (200)
+	require.Equal(t, http.StatusForbidden, rr.Code)
+
+	// Test accessing without proper credentials
+	req, err = http.NewRequest("GET", "/get/existingKey", nil)
+	require.NoError(t, err)
+	// Not setting basic auth here to simulate missing credentials
+
+	rr = httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	// Check if the response status code is Unauthorized (401)
+	require.Equal(t, http.StatusUnauthorized, rr.Code)
+}
+
+func TestDareServer_HandlerLogin(t *testing.T) {
+	usersStore := auth.NewUserStore()
+	server := &DareServer{
+		userStore: usersStore,
+	}
+
+	// Adding a test user
+	usersStore.AddUser("testuser", "testpassword")
+
+	// Test case: valid login request
+	req, err := http.NewRequest(http.MethodPost, "/login", nil)
+	assert.NoError(t, err)
+
+	req.SetBasicAuth("testuser", "testpassword")
+	rr := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(server.HandlerLogin)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var responseBody map[string]string
+	err = json.NewDecoder(rr.Body).Decode(&responseBody)
+	assert.NoError(t, err)
+	assert.Contains(t, responseBody, "token")
+	assert.NotEmpty(t, responseBody["token"])
+
+	// Test case: invalid method
+	req, err = http.NewRequest(http.MethodGet, "/login", nil)
+	assert.NoError(t, err)
+
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+
+	// Test case: missing credentials
+	req, err = http.NewRequest(http.MethodPost, "/login", nil)
+	assert.NoError(t, err)
+
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusUnauthorized, rr.Code)
+
+	// Test case: invalid credentials
+	req, err = http.NewRequest(http.MethodPost, "/login", nil)
+	assert.NoError(t, err)
+
+	req.SetBasicAuth("testuser", "wrongpassword")
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 }

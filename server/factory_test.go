@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/database"
 	"github.com/dmarro89/dare-db/logger"
 	"gotest.tools/assert"
@@ -14,7 +15,6 @@ import (
 func TestMain(m *testing.M) {
 
 	// Init configuration first
-	//os.Setenv("DARE_LOG_FILE", "dare-test.log")
 	testConf := SetupTestConfiguration()
 	fmt.Println("Test log file should be: ", testConf.Get("log.log_file"))
 
@@ -39,7 +39,7 @@ func TestNewServerWithTlsEnabled(t *testing.T) {
 	t.Setenv("DARE_TLS_ENABLED", "true")
 
 	factory := NewFactory(NewConfiguration(""), logger.NewDareLogger())
-	server := factory.GetWebServer(NewDareServer(database.NewDatabase()))
+	server := factory.GetWebServer(NewDareServer(database.NewDatabase(), auth.NewUserStore()))
 
 	// Assert that the server is of type HttpsServer
 	_, isHttpsServer := server.(*HttpsServer)
@@ -51,7 +51,7 @@ func TestNewServerWithTlsDisabled(t *testing.T) {
 	t.Setenv("DARE_TLS_ENABLED", "false")
 
 	factory := NewFactory(NewConfiguration(""), logger.NewDareLogger())
-	server := factory.GetWebServer(NewDareServer(database.NewDatabase()))
+	server := factory.GetWebServer(NewDareServer(database.NewDatabase(), auth.NewUserStore()))
 
 	// Assert that the server is of type HttpServer
 	_, isHttpServer := server.(*HttpServer)

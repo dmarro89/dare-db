@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/logger"
 	"github.com/stretchr/testify/mock"
 	"gotest.tools/assert"
@@ -24,7 +25,7 @@ type MockDareServer struct {
 	mock.Mock
 }
 
-func (ds *MockDareServer) CreateMux() *http.ServeMux {
+func (ds *MockDareServer) CreateMux(auth.Authorizer, auth.Authenticator) *http.ServeMux {
 	args := ds.Called()
 	return args.Get(0).(*http.ServeMux)
 }
@@ -34,6 +35,8 @@ func (ds *MockDareServer) HandlerGetById(w http.ResponseWriter, r *http.Request)
 func (ds *MockDareServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
 }
 func (ds *MockDareServer) HandlerDelete(w http.ResponseWriter, r *http.Request) {
+}
+func (ds *MockDareServer) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestNewHttpServer(t *testing.T) {

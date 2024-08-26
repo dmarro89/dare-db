@@ -1,0 +1,4 @@
+p, admin, *, GET
+p, admin, *, POST
+p, admin, *, PUT
+p, admin, *, DELETE

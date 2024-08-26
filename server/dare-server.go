@@ -5,33 +5,49 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/database"
 )
 
 const KEY_PARAM = "key"
 
 type IDare interface {
-	CreateMux() *http.ServeMux
+	CreateMux(auth.Authorizer, auth.Authenticator) *http.ServeMux
 	HandlerGetById(w http.ResponseWriter, r *http.Request)
 	HandlerSet(w http.ResponseWriter, r *http.Request)
 	HandlerDelete(w http.ResponseWriter, r *http.Request)
+	HandlerLogin(w http.ResponseWriter, r *http.Request)
 }
 
 type DareServer struct {
-	db *database.Database
+	db        *database.Database
+	userStore *auth.UserStore
 }
 
-func NewDareServer(db *database.Database) *DareServer {
+func NewDareServer(db *database.Database, userStore *auth.UserStore) *DareServer {
 	return &DareServer{
-		db: db,
+		db:        db,
+		userStore: userStore,
 	}
 }
 
-func (srv *DareServer) CreateMux() *http.ServeMux {
+func (srv *DareServer) CreateMux(authorizer auth.Authorizer, authenticator auth.Authenticator) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /get/{key}", srv.HandlerGetById)
-	mux.HandleFunc("POST /set", srv.HandlerSet)
-	mux.HandleFunc("DELETE /delete/{key}", srv.HandlerDelete)
+
+	if authorizer == nil {
+		authorizer = auth.GetDefaultAuth()
+	}
+
+	if authenticator == nil {
+		authenticator = auth.NewJWTAutenticatorWithUsers(srv.userStore)
+	}
+
+	middleware := auth.NewCasbinMiddleware(authorizer, authenticator)
+	mux.HandleFunc(
+		fmt.Sprintf(`GET /get/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerGetById))
+	mux.HandleFunc("POST /set", middleware.HandleFunc(srv.HandlerSet))
+	mux.HandleFunc(fmt.Sprintf(`DELETE /delete/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerDelete))
+	mux.HandleFunc("POST /login", srv.HandlerLogin)
 	return mux
 }
 
@@ -107,4 +123,34 @@ func (srv *DareServer) HandlerDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (srv *DareServer) HandlerLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	username, password, ok := r.BasicAuth()
+	if !ok || !srv.userStore.ValidateCredentials(username, password) {
+		http.Error(w, "Unauthorized: missing or invalid credentials", http.StatusUnauthorized)
+		return
+	}
+
+	authenticator := auth.NewJWTAutenticatorWithUsers(srv.userStore)
+	token, err := authenticator.GenerateToken(username)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+	srv.userStore.SaveToken(username, token)
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(map[string]string{
+		"token": token,
+	})
+	if err != nil {
+		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
+	}
 }
