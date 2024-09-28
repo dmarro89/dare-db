@@ -86,7 +86,7 @@ func (srv *DareServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data map[string]interface{}
+	var data map[string]string
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
 		http.Error(w, "Invalid JSON format, the body must be in the form of {\"key\": \"value\"}", http.StatusBadRequest)

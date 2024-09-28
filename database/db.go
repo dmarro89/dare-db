@@ -26,7 +26,7 @@ func (db *Database) Get(key string) interface{} {
 	return db.dict.Get(key)
 }
 
-func (db *Database) Set(key string, value interface{}) error {
+func (db *Database) Set(key string, value string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
