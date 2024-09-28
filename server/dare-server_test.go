@@ -29,7 +29,7 @@ func TestServer_SetAndGet(t *testing.T) {
 	srv.HandlerSet(setWrongFormatResponse, setWrongFormatRequest)
 	assert.Equal(t, http.StatusBadRequest, setWrongFormatResponse.Code, "Invalid JSON format, the body must be in the form of {\"key\": \"value\"}")
 
-	setData := map[string]interface{}{"testKey": "testValue"}
+	setData := map[string]string{"testKey": "testValue"}
 	setDataJSON, _ := json.Marshal(setData)
 	setRequest, _ := http.NewRequest("POST", "/set", bytes.NewBuffer(setDataJSON))
 
@@ -56,7 +56,7 @@ func TestServer_SetAndGet(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, getResponse.Code, "Expected status %d, got %d", http.StatusOK, getResponse.Code)
 
-	var getResult map[string]interface{}
+	var getResult map[string]string
 	err := json.Unmarshal(getResponse.Body.Bytes(), &getResult)
 	assert.Nil(t, err, "Error decoding JSON response")
 
@@ -70,7 +70,7 @@ func TestServer_SetAndDelete(t *testing.T) {
 	db := database.NewDatabase()
 	srv := NewDareServer(db, auth.NewUserStore())
 
-	setData := map[string]interface{}{"testKey": "testValue"}
+	setData := map[string]string{"testKey": "testValue"}
 	setDataJSON, _ := json.Marshal(setData)
 	setRequest, _ := http.NewRequest("POST", "/set", bytes.NewBuffer(setDataJSON))
 	setResponse := httptest.NewRecorder()
@@ -224,7 +224,7 @@ func TestMiddleware_ProtectedEndpoints(t *testing.T) {
 	json.NewDecoder(rr.Body).Decode(&tokenResponse)
 
 	// Test POST request for a protected resource
-	postData := map[string]interface{}{"newKey": "newValue"}
+	postData := map[string]string{"newKey": "newValue"}
 	body, err := json.Marshal(postData)
 	require.NoError(t, err)
 

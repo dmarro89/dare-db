@@ -64,12 +64,12 @@ func (srv *DareServer) HandlerGetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	val := srv.db.Get(key)
-	if val == nil {
+	if val == "" {
 		http.Error(w, fmt.Sprintf(`Key "%v" not found`, key), http.StatusNotFound)
 		return
 	}
 
-	response, err := json.Marshal(map[string]interface{}{key: val})
+	response, err := json.Marshal(map[string]string{key: val})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

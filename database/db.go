@@ -19,7 +19,7 @@ func NewDatabase() *Database {
 	}
 }
 
-func (db *Database) Get(key string) interface{} {
+func (db *Database) Get(key string) string {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
