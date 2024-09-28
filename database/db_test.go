@@ -63,7 +63,7 @@ func TestDatabase_Delete(t *testing.T) {
 	}
 
 	result := db.Get(key)
-	if result != nil {
+	if result != "" {
 		t.Errorf("Expected nil after deletion, got %v", result)
 	}
 }

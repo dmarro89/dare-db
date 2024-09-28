@@ -19,14 +19,14 @@ func NewDatabase() *Database {
 	}
 }
 
-func (db *Database) Get(key string) interface{} {
+func (db *Database) Get(key string) string {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
 	return db.dict.Get(key)
 }
 
-func (db *Database) Set(key string, value interface{}) error {
+func (db *Database) Set(key string, value string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
