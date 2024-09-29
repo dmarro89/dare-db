@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/dmarro89/dare-db/auth"
 	"github.com/dmarro89/dare-db/database"
@@ -49,6 +50,8 @@ func (srv *DareServer) CreateMux(authorizer auth.Authorizer, authenticator auth.
 	middleware := auth.NewCasbinMiddleware(authorizer, authenticator)
 	mux.HandleFunc(
 		fmt.Sprintf(`GET /get/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerGetById))
+	mux.HandleFunc(
+		`GET /getAllItems`, middleware.HandleFunc(srv.HandlerGetPaginatedItems))
 	mux.HandleFunc("POST /set", middleware.HandleFunc(srv.HandlerSet))
 	mux.HandleFunc(fmt.Sprintf(`DELETE /delete/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerDelete))
 	mux.HandleFunc("POST /login", srv.HandlerLogin)
@@ -60,6 +63,8 @@ func (srv *DareServer) CreateMux(authorizer auth.Authorizer, authenticator auth.
 	mux.HandleFunc(fmt.Sprintf(`DELETE /collections/delete/{%s}`, COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerDeleteCollection))
 	mux.HandleFunc(
 		fmt.Sprintf(`GET /{%s}/get/{%s}`, COLLECTION_NAME_PARAM, KEY_PARAM), middleware.HandleFunc(srv.HandlerCollectionGetById))
+	mux.HandleFunc(
+		`GET /{%s}/getAllItems`, middleware.HandleFunc(srv.HandlerGetPaginatedCollectionItems))
 	mux.HandleFunc(fmt.Sprintf("POST /{%s}/set", COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerCollectionSet))
 	mux.HandleFunc(fmt.Sprintf(`DELETE /{%s}/delete/{%s}`, COLLECTION_NAME_PARAM, KEY_PARAM), middleware.HandleFunc(srv.HandlerCollectionDelete))
 	return mux
@@ -84,6 +89,34 @@ func (srv *DareServer) HandlerGetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response, err := json.Marshal(map[string]string{key: val})
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
+}
+
+func (srv *DareServer) HandlerGetPaginatedItems(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the page and pageSize from query parameters
+	page := parseQueryParam(r, "page", 1)
+	pageSize := parseQueryParam(r, "pageSize", 10)
+
+	// Retrieve paginated items
+	items := srv.collectionManager.GetDefaultCollection().GetAllItems()
+	paginatedItems := paginateItems(items, page, pageSize)
+
+	response, err := json.Marshal(map[string]interface{}{
+		"items":    paginatedItems,
+		"page":     page,
+		"pageSize": pageSize,
+	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -127,6 +160,78 @@ func (srv *DareServer) HandlerCollectionGetById(w http.ResponseWriter, r *http.R
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
 
+}
+
+func (srv *DareServer) HandlerGetPaginatedCollectionItems(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the page and pageSize from query parameters
+	page := parseQueryParam(r, "page", 1)
+	pageSize := parseQueryParam(r, "pageSize", 10)
+
+	collectionName := r.PathValue(COLLECTION_NAME_PARAM)
+	collection, exists := srv.collectionManager.GetCollection(collectionName)
+	if !exists {
+		http.Error(w, fmt.Sprintf(`Collection "%s" not found`, collectionName), http.StatusNotFound)
+		return
+	}
+
+	// Retrieve paginated items
+	items := collection.GetAllItems()
+	paginatedItems := paginateItems(items, page, pageSize)
+
+	response, err := json.Marshal(map[string]interface{}{
+		"items":    paginatedItems,
+		"page":     page,
+		"pageSize": pageSize,
+	})
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(response)
+}
+
+func parseQueryParam(r *http.Request, key string, defaultValue int) int {
+	queryValue := r.URL.Query().Get(key)
+	if queryValue == "" {
+		return defaultValue
+	}
+	parsedValue, err := strconv.Atoi(queryValue)
+	if err != nil {
+		return defaultValue
+	}
+	return parsedValue
+}
+
+func paginateItems(items map[string]string, page, pageSize int) map[string]string {
+	keys := make([]string, 0, len(items))
+	for key := range items {
+		keys = append(keys, key)
+	}
+
+	totalItems := len(keys)
+	startIndex := (page - 1) * pageSize
+	if startIndex >= totalItems {
+		return map[string]string{} // Return empty map if page exceeds total items
+	}
+
+	endIndex := startIndex + pageSize
+	if endIndex > totalItems {
+		endIndex = totalItems
+	}
+
+	paginatedItems := make(map[string]string)
+	for _, key := range keys[startIndex:endIndex] {
+		paginatedItems[key] = items[key]
+	}
+
+	return paginatedItems
 }
 
 func (srv *DareServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
