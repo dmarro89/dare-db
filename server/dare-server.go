@@ -51,22 +51,22 @@ func (srv *DareServer) CreateMux(authorizer auth.Authorizer, authenticator auth.
 	mux.HandleFunc(
 		fmt.Sprintf(`GET /get/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerGetById))
 	mux.HandleFunc(
-		`GET /getAllItems`, middleware.HandleFunc(srv.HandlerGetPaginatedItems))
+		`GET /items`, middleware.HandleFunc(srv.HandlerGetPaginatedItems))
 	mux.HandleFunc("POST /set", middleware.HandleFunc(srv.HandlerSet))
 	mux.HandleFunc(fmt.Sprintf(`DELETE /delete/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerDelete))
 	mux.HandleFunc("POST /login", srv.HandlerLogin)
 	mux.HandleFunc(
-		fmt.Sprintf(`GET /collections/get/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerGetCollection))
+		fmt.Sprintf(`GET /collections/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerGetCollection))
 	mux.HandleFunc(
 		`GET /collections`, middleware.HandleFunc(srv.HandlerGetCollections))
-	mux.HandleFunc(fmt.Sprintf("POST /collections/create/{%s}", COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerCreateCollection))
-	mux.HandleFunc(fmt.Sprintf(`DELETE /collections/delete/{%s}`, COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerDeleteCollection))
+	mux.HandleFunc(fmt.Sprintf("POST /collections/{%s}", COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerCreateCollection))
+	mux.HandleFunc(fmt.Sprintf(`DELETE /collections/{%s}`, COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerDeleteCollection))
 	mux.HandleFunc(
-		fmt.Sprintf(`GET /{%s}/get/{%s}`, COLLECTION_NAME_PARAM, KEY_PARAM), middleware.HandleFunc(srv.HandlerCollectionGetById))
+		fmt.Sprintf(`GET /collections/{%s}/get/{%s}`, COLLECTION_NAME_PARAM, KEY_PARAM), middleware.HandleFunc(srv.HandlerCollectionGetById))
 	mux.HandleFunc(
-		`GET /{%s}/getAllItems`, middleware.HandleFunc(srv.HandlerGetPaginatedCollectionItems))
-	mux.HandleFunc(fmt.Sprintf("POST /{%s}/set", COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerCollectionSet))
-	mux.HandleFunc(fmt.Sprintf(`DELETE /{%s}/delete/{%s}`, COLLECTION_NAME_PARAM, KEY_PARAM), middleware.HandleFunc(srv.HandlerCollectionDelete))
+		fmt.Sprintf(`GET /collections/{%s}/items`, COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerGetPaginatedCollectionItems))
+	mux.HandleFunc(fmt.Sprintf("POST /collections/{%s}/set", COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerCollectionSet))
+	mux.HandleFunc(fmt.Sprintf(`DELETE /collections/{%s}/delete/{%s}`, COLLECTION_NAME_PARAM, KEY_PARAM), middleware.HandleFunc(srv.HandlerCollectionDelete))
 	return mux
 }
 
