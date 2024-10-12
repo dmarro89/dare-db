@@ -11,7 +11,13 @@ require (
 	gotest.tools v2.2.0+incompatible
 )
 
-require github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
+require (
+	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/manifoldco/promptui v0.9.0 // indirect
+	github.com/spf13/cobra v1.8.1 // indirect
+)
 
 require (
 	github.com/casbin/casbin v1.9.1

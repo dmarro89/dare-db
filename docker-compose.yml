@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.tls.yml
+    ports:
+      - "2605:2605"
+    environment:
+      ENV DARE_TLS_ENABLED: "True"
+      ENV DARE_CERT_PRIVATE: "/app/settings/cert_private.pem"
+      ENV DARE_CERT_PUBLIC: "/app/settings/cert_public.pem"
+    volumes:
+      - ./auth/rbac_model.conf:/app/auth/rbac_model.conf
+      - ./auth/rbac_policy.csv:/app/auth/rbac_policy.csv
+    command: ./app
+
+  cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.tls.yml
+    environment:
+      APP_MODE: "cli"
+    volumes:
+      - ./auth/rbac_model.conf:/app/auth/rbac_model.conf
+      - ./auth/rbac_policy.csv:/app/auth/rbac_policy.csv
+    command: ./app cli_command
+    stdin_open: true
+    tty: true
+    depends_on:
+      - server
