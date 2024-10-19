@@ -50,8 +50,6 @@ func (srv *DareServer) CreateMux(authorizer auth.Authorizer, authenticator auth.
 	middleware := auth.NewCasbinMiddleware(authorizer, authenticator)
 	mux.HandleFunc(
 		fmt.Sprintf(`GET /get/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerGetById))
-	mux.HandleFunc(
-		`GET /items`, middleware.HandleFunc(srv.HandlerGetPaginatedItems))
 	mux.HandleFunc("POST /set", middleware.HandleFunc(srv.HandlerSet))
 	mux.HandleFunc(fmt.Sprintf(`DELETE /delete/{%s}`, KEY_PARAM), middleware.HandleFunc(srv.HandlerDelete))
 	mux.HandleFunc("POST /login", srv.HandlerLogin)
@@ -89,34 +87,6 @@ func (srv *DareServer) HandlerGetById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response, err := json.Marshal(map[string]string{key: val})
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(response)
-}
-
-func (srv *DareServer) HandlerGetPaginatedItems(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Parse the page and pageSize from query parameters
-	page := parseQueryParam(r, "page", 1)
-	pageSize := parseQueryParam(r, "pageSize", 10)
-
-	// Retrieve paginated items
-	items := srv.collectionManager.GetDefaultCollection().GetAllItems()
-	paginatedItems := paginateItems(items, page, pageSize)
-
-	response, err := json.Marshal(map[string]interface{}{
-		"items":    paginatedItems,
-		"page":     page,
-		"pageSize": pageSize,
-	})
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -197,6 +167,40 @@ func (srv *DareServer) HandlerGetPaginatedCollectionItems(w http.ResponseWriter,
 	w.Write(response)
 }
 
+type Item struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func paginateItems(items map[string]string, page, pageSize int) []Item {
+	keys := make([]string, 0, len(items))
+	for key := range items {
+		keys = append(keys, key)
+	}
+
+	totalItems := len(keys)
+	startIndex := (page - 1) * pageSize
+	if startIndex >= totalItems {
+		return []Item{} // Return empty array if page exceeds total items
+	}
+
+	endIndex := startIndex + pageSize
+	if endIndex > totalItems {
+		endIndex = totalItems
+	}
+
+	// Crea una slice di Item per contenere gli elementi paginati
+	paginatedItems := make([]Item, 0, endIndex-startIndex)
+	for _, key := range keys[startIndex:endIndex] {
+		paginatedItems = append(paginatedItems, Item{
+			Key:   key,
+			Value: items[key],
+		})
+	}
+
+	return paginatedItems
+}
+
 func parseQueryParam(r *http.Request, key string, defaultValue int) int {
 	queryValue := r.URL.Query().Get(key)
 	if queryValue == "" {
@@ -207,31 +211,6 @@ func parseQueryParam(r *http.Request, key string, defaultValue int) int {
 		return defaultValue
 	}
 	return parsedValue
-}
-
-func paginateItems(items map[string]string, page, pageSize int) map[string]string {
-	keys := make([]string, 0, len(items))
-	for key := range items {
-		keys = append(keys, key)
-	}
-
-	totalItems := len(keys)
-	startIndex := (page - 1) * pageSize
-	if startIndex >= totalItems {
-		return map[string]string{} // Return empty map if page exceeds total items
-	}
-
-	endIndex := startIndex + pageSize
-	if endIndex > totalItems {
-		endIndex = totalItems
-	}
-
-	paginatedItems := make(map[string]string)
-	for _, key := range keys[startIndex:endIndex] {
-		paginatedItems[key] = items[key]
-	}
-
-	return paginatedItems
 }
 
 func (srv *DareServer) HandlerSet(w http.ResponseWriter, r *http.Request) {
@@ -274,8 +253,8 @@ func (srv *DareServer) HandlerCollectionSet(w http.ResponseWriter, r *http.Reque
 	collectionName := r.PathValue(COLLECTION_NAME_PARAM)
 	collection, exists := srv.collectionManager.GetCollection(collectionName)
 	if !exists {
-		http.Error(w, fmt.Sprintf(`Collection "%s" not found`, collectionName), http.StatusNotFound)
-		return
+		srv.collectionManager.AddCollection(collectionName)
+		collection, _ = srv.collectionManager.GetCollection(collectionName)
 	}
 
 	for key, value := range data {

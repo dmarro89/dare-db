@@ -41,7 +41,7 @@ type Claims struct {
 }
 
 func (jwtAuthenticator *JWTAutenticator) GenerateToken(username string) (string, error) {
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(50 * time.Minute)
 	claims := &Claims{
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{

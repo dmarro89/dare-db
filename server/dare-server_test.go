@@ -516,7 +516,8 @@ func TestHandlerGetPaginatedItems_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Execute the handler
-	srv.HandlerGetPaginatedItems(w, req)
+	req.SetPathValue(COLLECTION_NAME_PARAM, "default")
+	srv.HandlerGetPaginatedCollectionItems(w, req)
 
 	// Assert the response
 	resp := w.Result()
@@ -526,7 +527,7 @@ func TestHandlerGetPaginatedItems_Success(t *testing.T) {
 	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
 
-	items := responseBody["items"].(map[string]interface{})
+	items := responseBody["items"].([]interface{})
 	assert.Len(t, items, 2, "Expected 2 items in paginated response")
 
 	assert.Equal(t, float64(1), responseBody["page"], "Expected page 1")
@@ -552,7 +553,8 @@ func TestHandlerGetPaginatedItems_Page2(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Execute the handler
-	srv.HandlerGetPaginatedItems(w, req)
+	req.SetPathValue(COLLECTION_NAME_PARAM, "default")
+	srv.HandlerGetPaginatedCollectionItems(w, req)
 
 	// Assert the response
 	resp := w.Result()
@@ -562,7 +564,7 @@ func TestHandlerGetPaginatedItems_Page2(t *testing.T) {
 	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
 
-	items := responseBody["items"].(map[string]interface{})
+	items := responseBody["items"].([]interface{})
 	assert.Len(t, items, 2, "Expected 2 items in paginated response")
 
 	assert.Equal(t, float64(2), responseBody["page"], "Expected page 2")
@@ -587,7 +589,8 @@ func TestHandlerGetPaginatedItems_EmptyPage(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Execute the handler
-	srv.HandlerGetPaginatedItems(w, req)
+	req.SetPathValue(COLLECTION_NAME_PARAM, "default")
+	srv.HandlerGetPaginatedCollectionItems(w, req)
 
 	// Assert the response
 	resp := w.Result()
@@ -597,7 +600,7 @@ func TestHandlerGetPaginatedItems_EmptyPage(t *testing.T) {
 	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
 
-	items := responseBody["items"].(map[string]interface{})
+	items := responseBody["items"].([]interface{})
 	assert.Len(t, items, 0, "Expected 0 items for empty page")
 
 	assert.Equal(t, float64(2), responseBody["page"], "Expected page 2")
@@ -617,7 +620,8 @@ func TestHandlerGetPaginatedItems_InvalidMethod(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Execute the handler
-	srv.HandlerGetPaginatedItems(w, req)
+	req.SetPathValue(COLLECTION_NAME_PARAM, "default")
+	srv.HandlerGetPaginatedCollectionItems(w, req)
 
 	// Assert the response
 	resp := w.Result()
@@ -655,7 +659,7 @@ func TestHandlerGetPaginatedCollectionItems_Success(t *testing.T) {
 	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
 
-	items := responseBody["items"].(map[string]interface{})
+	items := responseBody["items"].([]interface{})
 	assert.Len(t, items, 2, "Expected 2 items in paginated response")
 
 	assert.Equal(t, float64(1), responseBody["page"], "Expected page 1")
@@ -694,7 +698,7 @@ func TestHandlerGetPaginatedCollectionItems_Page2(t *testing.T) {
 	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
 
-	items := responseBody["items"].(map[string]interface{})
+	items := responseBody["items"].([]interface{})
 	assert.Len(t, items, 2, "Expected 2 items in paginated response")
 
 	assert.Equal(t, float64(2), responseBody["page"], "Expected page 2")
@@ -731,7 +735,7 @@ func TestHandlerGetPaginatedCollectionItems_EmptyPage(t *testing.T) {
 	err := json.NewDecoder(resp.Body).Decode(&responseBody)
 	assert.NoError(t, err)
 
-	items := responseBody["items"].(map[string]interface{})
+	items := responseBody["items"].([]interface{})
 	assert.Len(t, items, 0, "Expected 0 items for empty page")
 
 	assert.Equal(t, float64(2), responseBody["page"], "Expected page 2")
