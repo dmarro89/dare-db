@@ -26,6 +26,13 @@ func (db *Database) Get(key string) string {
 	return db.dict.Get(key)
 }
 
+func (db *Database) GetAllItems() map[string]string {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	return db.dict.GetAllItems()
+}
+
 func (db *Database) Set(key string, value string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()

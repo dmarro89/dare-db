@@ -15,7 +15,7 @@ The primary goal of this project is to offer an in-memory database that leverage
 To run the database as a Docker image, ensure you have Docker installed on your system. First, navigate to the root directory of your project and execute the following command to build the Docker image:
 
 ```bash
-docker build -t dare-db .
+docker build -t dare-db:latest .
 ```
 Once the image is built, you can run the database as a Docker container with the following command (*note: a configuration option ```-e DARE_HOST="0.0.0.0"``` is explicitly set to enable connections from the host machine to the database running within the Docker container*):
 
@@ -30,7 +30,7 @@ This command will start the database as a Docker container in detached mode, exp
 Build special Docker image, which will generate certificates
 
 ```bash
-docker build -t dare-db-tls -f Dockerfile.tls.yml .
+docker build -t dare-db-tls:latest -f Dockerfile.tls.yml .
 ```
 
 Once the image is built, you can run the database as a Docker container with the following command:
@@ -157,3 +157,27 @@ Here is how you could add your new ```code/improvement/fix``` with a *pull reque
     + Changed: ...
     + Fixed: ...
     + Dependencies: ...
+
+
+<details>
+
+<summary>How to Contribute: Dependencies</summary>
+
+## How to Contribute: Dependencies
+
+* [task (a.k.a.: `taskfile`)](https://github.com/go-task/task)
+	+ Install as Go module (globally)
+		```bash
+		go install github.com/go-task/task/v3/cmd/task@latest
+		```
+* [wgo - watcher-go](https://github.com/bokwoon95/wgo)
+	+ Install as Go module (globally)
+		```bash
+		go install github.com/bokwoon95/wgo@latest
+		```
+* [Lefhook (polyglot Git hooks manager)](https://github.com/evilmartians/lefthook/tree/master)
+	+ Install as Go module (globally)
+		```
+		go install github.com/evilmartians/lefthook@latest
+		```
+</details>

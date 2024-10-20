@@ -47,5 +47,7 @@ settings/*
 data/*
 
 # log files
-
 *.log
+
+# special binaries
+dare-db-app
