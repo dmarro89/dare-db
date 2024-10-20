@@ -11,6 +11,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// constants
+const JWT_TIME_TO_LIVE_MINUTES int = 60
+
 type Authenticator interface {
 	GenerateToken(string) (string, error)
 	VerifyToken(token string) (string, error)
@@ -41,7 +44,7 @@ type Claims struct {
 }
 
 func (jwtAuthenticator *JWTAutenticator) GenerateToken(username string) (string, error) {
-	expirationTime := time.Now().Add(50 * time.Minute)
+	expirationTime := time.Now().Add(time.Duration(JWT_TIME_TO_LIVE_MINUTES) * time.Minute)
 	claims := &Claims{
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
