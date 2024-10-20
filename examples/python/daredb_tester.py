@@ -156,7 +156,7 @@ class DareDBSamplerForCollections(DareDBManageCollections):
         """Populates database with sample data entries."""
 
         self.create(collection_name)
-        url = f"{base_url}/collections/{collection_name}"
+        url = f"{base_url}/collections/{collection_name}/set"
         logger.debug(f"Populate DB with sample data via URL (collection: {collection_name}): {url}")
 
         for i in range(self.MAX_REQUESTS):
@@ -166,7 +166,7 @@ class DareDBSamplerForCollections(DareDBManageCollections):
 
     def get_all_items(self, collection_name: str = "sample"):
 
-        url = f"{base_url}/collections/{collection_name}/getAllItems"
+        url = f"{base_url}/collections/{collection_name}/items"
         response = self.send_get_with_jwt(url)
         if response.status_code == 200:
             logger.info(f"\n{json.dumps(response.json(), indent=2)}")
