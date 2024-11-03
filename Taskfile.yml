@@ -1,0 +1,81 @@
+version: '3'
+
+vars:
+  DOCKER_IMAGE_NAME: "dare-db-tls"
+
+tasks:
+
+  default:
+    silent: true
+    cmds:
+      - task --list-all
+            
+  build:
+    cmds:
+      - go build -v main.go
+      - go build -o dare-db-app main.go
+
+  mod-tidy:
+    aliases: [gmt, tidy]
+    silent: true
+    cmds:
+       - go mod tidy
+
+  run:
+    aliases: [r]
+    env:
+        DARE_HOST: 127.0.0.1
+    cmds:
+      - go run main.go
+
+  run-watch:
+    aliases: [rw]
+    env:
+        DARE_HOST: 127.0.0.1
+    cmds:
+      - wgo -xdir data go run main.go
+      
+  test:
+    aliases: [t]
+    cmds:
+      - go test ./... -v
+  
+  pre-commit-run:
+    aliases: [pcr]
+    silent: true
+    run: once
+    cmds:
+      - lefthook run pre-commit --all-files
+  
+  docker-build:
+    aliases: [db]
+    silent: true
+    run: once
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE_NAME}}:latest -f Dockerfile.tls.yml .
+
+  docker-delete:
+    aliases: [dl]
+    silent: true
+    run: once
+    cmds:
+      - echo "stop container \"{{.DOCKER_IMAGE_NAME}}\""
+      - cmd: docker stop {{.DOCKER_IMAGE_NAME}}
+        ignore_error: true
+      - echo "delete container \"{{.DOCKER_IMAGE_NAME}}\""
+      - cmd: docker rm {{.DOCKER_IMAGE_NAME}}
+        ignore_error: true
+
+  docker-run:
+    aliases: [dr]
+    silent: true
+    run: once
+    cmds:
+      - task: docker-build
+      - task: docker-delete
+      - docker run -d -p "127.0.0.1:2605:2605" -e DARE_HOST="0.0.0.0" -e DARE_PORT=2605 -e DARE_TLS_ENABLED="True" -e DARE_CERT_PRIVATE="/app/settings/cert_private.pem" -e DARE_CERT_PUBLIC="/app/settings/cert_public.pem" --name {{.DOCKER_IMAGE_NAME}} {{.DOCKER_IMAGE_NAME}}:latest
+  
+
+
+
+
