@@ -337,3 +337,425 @@ func TestDareServer_HandlerLogin(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 }
+
+func TestHandlerCollectionGetById(t *testing.T) {
+	// Setup
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+	srv.collectionManager.AddCollection("test-collection")
+	collection, _ := srv.collectionManager.GetCollection("test-collection")
+	collection.Set("test-key", "test-value")
+
+	req := httptest.NewRequest(http.MethodGet, "/test-collection/test-key", nil)
+	w := httptest.NewRecorder()
+
+	// Set PathValue as if from a router
+	req.SetPathValue(COLLECTION_NAME_PARAM, "test-collection")
+	req.SetPathValue(KEY_PARAM, "test-key")
+
+	// Execute
+	srv.HandlerCollectionGetById(w, req)
+
+	// Assert
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var body map[string]string
+	err := json.NewDecoder(resp.Body).Decode(&body)
+	assert.NoError(t, err)
+	assert.Equal(t, "test-value", body["test-key"])
+}
+
+func TestHandlerCollectionSet(t *testing.T) {
+	// Setup
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+	srv.collectionManager.AddCollection("test-collection")
+
+	data := map[string]string{"test-key": "test-value"}
+	jsonData, _ := json.Marshal(data)
+
+	req := httptest.NewRequest(http.MethodPost, "/test-collection", bytes.NewBuffer(jsonData))
+	w := httptest.NewRecorder()
+
+	// Set PathValue as if from a router
+	req.SetPathValue(COLLECTION_NAME_PARAM, "test-collection")
+
+	// Execute
+	srv.HandlerCollectionSet(w, req)
+
+	// Assert
+	resp := w.Result()
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	// Verify that the key-value pair was stored
+	collection, _ := srv.collectionManager.GetCollection("test-collection")
+	val := collection.Get("test-key")
+	assert.Equal(t, "test-value", val)
+}
+
+func TestHandlerCollectionDelete(t *testing.T) {
+	// Setup
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+	srv.collectionManager.AddCollection("test-collection")
+	collection, _ := srv.collectionManager.GetCollection("test-collection")
+	collection.Set("test-key", "test-value")
+
+	req := httptest.NewRequest(http.MethodDelete, "/test-collection/test-key", nil)
+	w := httptest.NewRecorder()
+
+	// Set PathValue as if from a router
+	req.SetPathValue(COLLECTION_NAME_PARAM, "test-collection")
+	req.SetPathValue(KEY_PARAM, "test-key")
+
+	// Execute
+	srv.HandlerCollectionDelete(w, req)
+
+	// Assert
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Verify the key was deleted
+	val := collection.Get("test-key")
+	assert.Equal(t, "", val)
+}
+
+func TestHandlerGetCollections(t *testing.T) {
+	// Setup
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+	srv.collectionManager.AddCollection("collection1")
+	srv.collectionManager.AddCollection("collection2")
+
+	req := httptest.NewRequest(http.MethodGet, "/collections", nil)
+	w := httptest.NewRecorder()
+
+	// Execute
+	srv.HandlerGetCollections(w, req)
+
+	// Assert
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var collections []string
+	err := json.NewDecoder(resp.Body).Decode(&collections)
+	assert.NoError(t, err)
+	assert.ElementsMatch(t, []string{"collection1", "collection2"}, collections)
+}
+
+func TestHandlerCreateCollection(t *testing.T) {
+	// Setup
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/test-collection", nil)
+	w := httptest.NewRecorder()
+
+	// Set PathValue as if from a router
+	req.SetPathValue(COLLECTION_NAME_PARAM, "test-collection")
+
+	// Execute
+	srv.HandlerCreateCollection(w, req)
+
+	// Assert
+	resp := w.Result()
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	// Verify the collection was created
+	_, exists := srv.collectionManager.GetCollection("test-collection")
+	assert.True(t, exists)
+}
+
+func TestHandlerDeleteCollection(t *testing.T) {
+	// Setup
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+	srv.collectionManager.AddCollection("test-collection")
+
+	req := httptest.NewRequest(http.MethodDelete, "/test-collection", nil)
+	w := httptest.NewRecorder()
+
+	// Set PathValue as if from a router
+	req.SetPathValue(COLLECTION_NAME_PARAM, "test-collection")
+
+	// Execute
+	srv.HandlerDeleteCollection(w, req)
+
+	// Assert
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	// Verify the collection was deleted
+	_, exists := srv.collectionManager.GetCollection("test-collection")
+	assert.False(t, exists)
+}
+
+// Test handler for successful pagination
+func TestHandlerGetPaginatedItems_Success(t *testing.T) {
+	collectionManager := database.NewCollectionManager()
+	collectionManager.AddCollection(database.DEFAULT_COLLECTION)
+	srv := &DareServer{
+		collectionManager: collectionManager,
+	}
+	// Mock the default collection and add multiple items
+	collection := srv.collectionManager.GetDefaultCollection()
+	collection.Set("key1", "value1")
+	collection.Set("key2", "value2")
+	collection.Set("key3", "value3")
+	collection.Set("key4", "value4")
+
+	// Simulate HTTP GET request for page 1 with 2 items per page
+	req := httptest.NewRequest(http.MethodGet, "/items?page=1&pageSize=2", nil)
+	w := httptest.NewRecorder()
+
+	// Execute the handler
+	req.SetPathValue(COLLECTION_NAME_PARAM, "default")
+	srv.HandlerGetPaginatedCollectionItems(w, req)
+
+	// Assert the response
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var responseBody map[string]interface{}
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
+	assert.NoError(t, err)
+
+	items := responseBody["items"].([]interface{})
+	assert.Len(t, items, 2, "Expected 2 items in paginated response")
+
+	assert.Equal(t, float64(1), responseBody["page"], "Expected page 1")
+	assert.Equal(t, float64(2), responseBody["pageSize"], "Expected pageSize 2")
+}
+
+// Test handler for a different page
+func TestHandlerGetPaginatedItems_Page2(t *testing.T) {
+	collectionManager := database.NewCollectionManager()
+	collectionManager.AddCollection(database.DEFAULT_COLLECTION)
+	srv := &DareServer{
+		collectionManager: collectionManager,
+	}
+	// Mock the default collection and add multiple items
+	collection := srv.collectionManager.GetDefaultCollection()
+	collection.Set("key1", "value1")
+	collection.Set("key2", "value2")
+	collection.Set("key3", "value3")
+	collection.Set("key4", "value4")
+
+	// Simulate HTTP GET request for page 2 with 2 items per page
+	req := httptest.NewRequest(http.MethodGet, "/items?page=2&pageSize=2", nil)
+	w := httptest.NewRecorder()
+
+	// Execute the handler
+	req.SetPathValue(COLLECTION_NAME_PARAM, "default")
+	srv.HandlerGetPaginatedCollectionItems(w, req)
+
+	// Assert the response
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var responseBody map[string]interface{}
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
+	assert.NoError(t, err)
+
+	items := responseBody["items"].([]interface{})
+	assert.Len(t, items, 2, "Expected 2 items in paginated response")
+
+	assert.Equal(t, float64(2), responseBody["page"], "Expected page 2")
+	assert.Equal(t, float64(2), responseBody["pageSize"], "Expected pageSize 2")
+}
+
+// Test handler when no items are available for the given page
+func TestHandlerGetPaginatedItems_EmptyPage(t *testing.T) {
+	collectionManager := database.NewCollectionManager()
+	collectionManager.AddCollection(database.DEFAULT_COLLECTION)
+	srv := &DareServer{
+		collectionManager: collectionManager,
+	}
+
+	// Mock the default collection and add only a few items
+	collection := srv.collectionManager.GetDefaultCollection()
+	collection.Set("key1", "value1")
+	collection.Set("key2", "value2")
+
+	// Simulate HTTP GET request for page 2 with 5 items per page (no data should exist for page 2)
+	req := httptest.NewRequest(http.MethodGet, "/items?page=2&pageSize=5", nil)
+	w := httptest.NewRecorder()
+
+	// Execute the handler
+	req.SetPathValue(COLLECTION_NAME_PARAM, "default")
+	srv.HandlerGetPaginatedCollectionItems(w, req)
+
+	// Assert the response
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var responseBody map[string]interface{}
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
+	assert.NoError(t, err)
+
+	items := responseBody["items"].([]interface{})
+	assert.Len(t, items, 0, "Expected 0 items for empty page")
+
+	assert.Equal(t, float64(2), responseBody["page"], "Expected page 2")
+	assert.Equal(t, float64(5), responseBody["pageSize"], "Expected pageSize 5")
+}
+
+// Test handler for invalid method
+func TestHandlerGetPaginatedItems_InvalidMethod(t *testing.T) {
+	collectionManager := database.NewCollectionManager()
+	collectionManager.AddCollection(database.DEFAULT_COLLECTION)
+	srv := &DareServer{
+		collectionManager: collectionManager,
+	}
+
+	// Simulate HTTP POST request (invalid method)
+	req := httptest.NewRequest(http.MethodPost, "/items", nil)
+	w := httptest.NewRecorder()
+
+	// Execute the handler
+	req.SetPathValue(COLLECTION_NAME_PARAM, "default")
+	srv.HandlerGetPaginatedCollectionItems(w, req)
+
+	// Assert the response
+	resp := w.Result()
+	assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "Expected status 405 Method Not Allowed")
+}
+
+func TestHandlerGetPaginatedCollectionItems_Success(t *testing.T) {
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+
+	// Mock a collection with multiple items
+	srv.collectionManager.AddCollection("test-collection")
+	collection, _ := srv.collectionManager.GetCollection("test-collection")
+	collection.Set("key1", "value1")
+	collection.Set("key2", "value2")
+	collection.Set("key3", "value3")
+	collection.Set("key4", "value4")
+
+	// Simulate HTTP GET request for page 1 with 2 items per page
+	req := httptest.NewRequest(http.MethodGet, "/test-collection?page=1&pageSize=2", nil)
+	w := httptest.NewRecorder()
+
+	// Set path parameter as if from a router
+	req.SetPathValue(COLLECTION_NAME_PARAM, "test-collection")
+
+	// Execute the handler
+	srv.HandlerGetPaginatedCollectionItems(w, req)
+
+	// Assert the response
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var responseBody map[string]interface{}
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
+	assert.NoError(t, err)
+
+	items := responseBody["items"].([]interface{})
+	assert.Len(t, items, 2, "Expected 2 items in paginated response")
+
+	assert.Equal(t, float64(1), responseBody["page"], "Expected page 1")
+	assert.Equal(t, float64(2), responseBody["pageSize"], "Expected pageSize 2")
+}
+
+// Test successful pagination for page 2 of a collection
+func TestHandlerGetPaginatedCollectionItems_Page2(t *testing.T) {
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+
+	// Mock a collection with multiple items
+	srv.collectionManager.AddCollection("test-collection")
+	collection, _ := srv.collectionManager.GetCollection("test-collection")
+	collection.Set("key1", "value1")
+	collection.Set("key2", "value2")
+	collection.Set("key3", "value3")
+	collection.Set("key4", "value4")
+
+	// Simulate HTTP GET request for page 2 with 2 items per page
+	req := httptest.NewRequest(http.MethodGet, "/test-collection?page=2&pageSize=2", nil)
+	w := httptest.NewRecorder()
+
+	// Set path parameter as if from a router
+	req.SetPathValue(COLLECTION_NAME_PARAM, "test-collection")
+
+	// Execute the handler
+	srv.HandlerGetPaginatedCollectionItems(w, req)
+
+	// Assert the response
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var responseBody map[string]interface{}
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
+	assert.NoError(t, err)
+
+	items := responseBody["items"].([]interface{})
+	assert.Len(t, items, 2, "Expected 2 items in paginated response")
+
+	assert.Equal(t, float64(2), responseBody["page"], "Expected page 2")
+	assert.Equal(t, float64(2), responseBody["pageSize"], "Expected pageSize 2")
+}
+
+// Test handler when no items are available for the given page
+func TestHandlerGetPaginatedCollectionItems_EmptyPage(t *testing.T) {
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+
+	// Mock a collection with 2 items
+	srv.collectionManager.AddCollection("test-collection")
+	collection, _ := srv.collectionManager.GetCollection("test-collection")
+	collection.Set("key1", "value1")
+	collection.Set("key2", "value2")
+
+	// Simulate HTTP GET request for page 2 with 5 items per page (no data should exist for page 2)
+	req := httptest.NewRequest(http.MethodGet, "/test-collection?page=2&pageSize=5", nil)
+	w := httptest.NewRecorder()
+
+	// Set path parameter as if from a router
+	req.SetPathValue(COLLECTION_NAME_PARAM, "test-collection")
+
+	// Execute the handler
+	srv.HandlerGetPaginatedCollectionItems(w, req)
+
+	// Assert the response
+	resp := w.Result()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var responseBody map[string]interface{}
+	err := json.NewDecoder(resp.Body).Decode(&responseBody)
+	assert.NoError(t, err)
+
+	items := responseBody["items"].([]interface{})
+	assert.Len(t, items, 0, "Expected 0 items for empty page")
+
+	assert.Equal(t, float64(2), responseBody["page"], "Expected page 2")
+	assert.Equal(t, float64(5), responseBody["pageSize"], "Expected pageSize 5")
+}
+
+// Test handler for invalid method
+func TestHandlerGetPaginatedCollectionItems_InvalidMethod(t *testing.T) {
+	srv := &DareServer{
+		collectionManager: database.NewCollectionManager(),
+	}
+
+	// Simulate HTTP POST request (invalid method)
+	req := httptest.NewRequest(http.MethodPost, "/test-collection", nil)
+	w := httptest.NewRecorder()
+
+	// Execute the handler
+	srv.HandlerGetPaginatedCollectionItems(w, req)
+
+	// Assert the response
+	resp := w.Result()
+	assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode, "Expected status 405 Method Not Allowed")
+}
