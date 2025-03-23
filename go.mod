@@ -1,6 +1,6 @@
 module github.com/dmarro89/dare-db
 
-go 1.22.3
+go 1.23.4
 
 toolchain go1.24.1
 
