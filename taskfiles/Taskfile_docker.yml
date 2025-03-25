@@ -14,9 +14,9 @@ tasks:
     cmds:
       - docker build -t {{.DOCKER_IMAGE_NAME}}:latest -f Dockerfile.tls.yml .
 
-  remove:
+  delete:
     desc: stops and removed a docker container ("{{.DOCKER_IMAGE_NAME}}")
-    aliases: [dl]
+    aliases: [dd]
     silent: true
     run: once
     cmds:
