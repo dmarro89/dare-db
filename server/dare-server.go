@@ -65,7 +65,14 @@ func (srv *DareServer) CreateMux(authorizer auth.Authorizer, authenticator auth.
 		fmt.Sprintf(`GET /collections/{%s}/items`, COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerGetPaginatedCollectionItems))
 	mux.HandleFunc(fmt.Sprintf("POST /collections/{%s}/set", COLLECTION_NAME_PARAM), middleware.HandleFunc(srv.HandlerCollectionSet))
 	mux.HandleFunc(fmt.Sprintf(`DELETE /collections/{%s}/delete/{%s}`, COLLECTION_NAME_PARAM, KEY_PARAM), middleware.HandleFunc(srv.HandlerCollectionDelete))
-	return mux
+
+	// Wrap the mux with the CORS handler
+	corsHandler := srv.setupCORS(mux)
+	// Create a new ServeMux that uses the CORS handler.
+	finalMux := http.NewServeMux()
+	finalMux.Handle("/", corsHandler)
+
+	return finalMux
 }
 
 func (srv *DareServer) HandlerGetById(w http.ResponseWriter, r *http.Request) {
@@ -430,4 +437,20 @@ func (srv *DareServer) HandlerDeleteCollection(w http.ResponseWriter, r *http.Re
 
 	srv.collectionManager.RemoveCollection(collectionName)
 	w.WriteHeader(http.StatusOK)
+}
+
+func (srv *DareServer) setupCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://127.0.0.1:5002") // Or "*" for all origins (less secure)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

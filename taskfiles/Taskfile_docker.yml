@@ -1,0 +1,39 @@
+version: '3'
+
+vars:
+  DOCKER_IMAGE_NAME_PURE: "dare-db"
+  DOCKER_IMAGE_NAME: "dare-db-tls"
+
+tasks:
+  
+  build:
+    desc: build a new docker container ("{{.DOCKER_IMAGE_NAME}}")
+    aliases: [db]
+    silent: true
+    run: once
+    cmds:
+      - docker build -t {{.DOCKER_IMAGE_NAME}}:latest -f Dockerfile.tls.yml .
+
+  remove:
+    desc: stops and removed a docker container ("{{.DOCKER_IMAGE_NAME}}")
+    aliases: [dl]
+    silent: true
+    run: once
+    cmds:
+      - echo "stop container \"{{.DOCKER_IMAGE_NAME}}\""
+      - cmd: docker stop {{.DOCKER_IMAGE_NAME}}
+        ignore_error: true
+      - echo "remove container \"{{.DOCKER_IMAGE_NAME}}\""
+      - cmd: docker rm {{.DOCKER_IMAGE_NAME}}
+        ignore_error: true
+
+  run:
+    desc: re-runs a new docker container ("{{.DOCKER_IMAGE_NAME}}")
+    aliases: [dr]
+    silent: true
+    run: once
+    cmds:
+      - task: remove
+      - task: build
+      - docker run -d -p "127.0.0.1:2605:2605" -e DARE_HOST="0.0.0.0" -e DARE_PORT=2605 -e DARE_TLS_ENABLED="True" -e DARE_CERT_PRIVATE="/app/settings/cert_private.pem" -e DARE_CERT_PUBLIC="/app/settings/cert_public.pem" --name {{.DOCKER_IMAGE_NAME}} {{.DOCKER_IMAGE_NAME}}:latest
+  

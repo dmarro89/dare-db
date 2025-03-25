@@ -1,0 +1,178 @@
+#
+# this is a template, following placeholders must be replaced:
+#  - API_SERVER_NAME
+#
+openapi: "3.0.0"
+info:
+  version: v0.0.6
+  title: DareDB API Spec
+  description: |
+    DareDB API documentation in OpenAPI 3.0 format
+    #### Features:
+    * Provides documentation on REST API of the database
+servers:
+  - url: "API_SERVER_NAME"
+
+paths:
+  /login:
+    post:
+      summary: Retrieves a JWT token by performing a login with username and password.
+      tags:
+        - auth
+      description: |
+        This endpoint performs a basic authentication using the provided credentials 
+        and returns a JSON Web Token (JWT) that can be used for subsequent requests.
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Successful JWT token retrieval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: The retrieved JWT token
+        '401':
+          description: Invalid username or password
+        '500':
+          description: Internal server error
+
+  /set:
+    post:
+      summary: Set a key-value pair in the data store.
+      tags:
+        - default
+      operationId: setKeyValue
+      security:
+        - jwtBearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: value
+          in: body
+          required: true
+          schema:
+            type: string
+      responses:
+        201:
+          description: Key-value pair set successfully.
+        default:
+          description: Unexpected error.
+
+  /get:
+    get:
+      summary: Get the value associated with a key from the data store.
+      tags:
+        - default
+      operationId: getValueByKey
+      security:
+        - jwtBearerAuth: []
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Value retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: string
+        default:
+          description: Unexpected error.
+
+  /collections:
+    get:
+      summary: List all collections in the data store.
+      tags:
+        - collections
+      operationId: listCollections
+      security:
+        - jwtBearerAuth: []
+      responses:
+        200:
+          description: Collections listed successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /collections/{collectionName}:
+    post:
+      summary: Create a new collection in the data store.
+      tags:
+        - collections
+      security:
+        - jwtBearerAuth: []
+      operationId: createCollection
+      parameters:
+        - name: collectionName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        201:
+          description: Collection created successfully.
+        default:
+          description: Unexpected error.
+
+    delete:
+      summary: Delete a collection from the data store.
+      tags:
+        - collections
+      operationId: deleteCollection
+      security:
+        - jwtBearerAuth: []
+      parameters:
+        - name: collectionName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Collection deleted successfully.
+        default:
+          description: Unexpected error.
+
+components:
+  schemas:
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+          
+  securitySchemes:
+    basicAuth:
+      description: user login and password from `config.toml` 
+      type: http
+      scheme: basic
+    #jwtBearerAuth:
+    #  type: http
+    #  scheme: bearer
+    #  bearerFormat: JWT
+    jwtBearerAuth:
+      description: obtain token after sending `/login` request (requires login/password from `config.toml`)
+      type: apiKey
+      in: header
+      name: Authorization
