@@ -1,13 +1,19 @@
 ## About
 
-Following file contains OpenAPI 3.0 spec for DareDB: [daredb-openapi_primary.yaml](daredb-openapi_primary.yaml)
+Following file contains OpenAPI 3.0 spec for DareDB in `YAML` format -> [daredb-openapi_primary.yaml](daredb-openapi_primary.yaml)
 
-## View API
 
-You can view API directly locally using `docker compose`. Must be run in the directory `openapi`.
+## Render API: Using `redocly` (remote)
+
+You can view API  OpenAPI 3.0 spec for DareDB using `redocly` -> [daredb-openapi_primary.yaml](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/dmarro89/dare-db/refs/heads/main/openapi/daredb-openapi_primary.yaml)
+
+
+## Render API: Self-Hosted (local)
+
+You can render API directly locally using `docker compose`. Must be run in the directory `openapi`.
 
 * Run with docker compose
-	``bash
+	```bash
 	docker compose up
 	```
 * (optional) Rebuild `openapi` server on demand
