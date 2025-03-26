@@ -120,9 +120,17 @@ func main() {
 }
 ```
 
+## OpenAPI Spec
+
+For latest OpenAPI spec see: [openapi](openapi)
+
 ## How to Contribute
 
 All sorts of contributions to this project!  Here's how you can get involved:
+
+<details>
+
+<summary>How to Contribute: Overview </summary>
 
 * *Found a bug?* Let us know! Open an [issue](https://github.com/dmarro89/dare-db/issues) and briefly describe the problem.
 * *Have a great idea for a new feature?* Open an [issue](https://github.com/dmarro89/dare-db/issues) to discuss it. If you'd like to implementing it yourself, you can assign this issue to yourself and create a pull request once the code/improvement/fix is ready.
@@ -157,7 +165,7 @@ Here is how you could add your new ```code/improvement/fix``` with a *pull reque
     + Changed: ...
     + Fixed: ...
     + Dependencies: ...
-
+</details>
 
 <details>
 

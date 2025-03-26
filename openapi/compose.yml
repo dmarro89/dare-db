@@ -1,0 +1,13 @@
+services:
+  openapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: daredb-openapi:latest
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:5002:5002"
+
+networks:
+    daredb-network:
