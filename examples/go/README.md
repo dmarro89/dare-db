@@ -4,10 +4,13 @@ Example in Go to work with DareDB
 
 ## Setup
 
-Create `.env` file
+Create `.env` file with the following content (modify credentials)
 ```
-cp .env.sample .env
-nano .env
+BASE_URL=http://127.0.0.1:2605
+#BASE_URL=https://127.0.0.1:2605
+DB_USERNAME=<YOUR-USER-HERE>
+DB_PASSWORD=<YOUR-PASSWORD-HERE>
+
 ```
 
 
