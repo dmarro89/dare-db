@@ -1,8 +1,8 @@
-# Dare-DB
+## Dare-DB
 
 Here's the [official documentation](https://dmarro89.github.io/daredb-docs/).
 
-**Dare-DB** is a project that provides an in-memory database utilizing Redis-inspired hashtables implemented in Go [here](https://github.com/dmarro89/go-redis-hashtable). It offers a lightweight and efficient solution for storing data in memory and accessing it through simple HTTP operations.
+**Dare-DB** is a project that provides an in-memory database utilizing Redis-inspired hashtables implemented in Go package [go-redis-hashtable](https://github.com/dmarro89/go-redis-hashtable). It offers a lightweight and efficient solution for storing data in memory and accessing it through simple HTTP operations.
 
 ## Project Purpose
 
@@ -10,7 +10,7 @@ The primary goal of this project is to offer an in-memory database that leverage
 
 ## Running the Database
 
-### Using Docker
+### Using `Docker`
 
 To run the database as a Docker image, ensure you have Docker installed on your system. First, navigate to the root directory of your project and execute the following command to build the Docker image:
 
@@ -23,9 +23,9 @@ Once the image is built, you can run the database as a Docker container with the
 docker run -d -p "127.0.0.1:2605:2605" -e DARE_HOST="0.0.0.0" dare-db 
 ```
 
-This command will start the database as a Docker container in detached mode, exposing port 2605 of the container to port ```2605``` on your ```localhost```.
+This command will start the database as a Docker container in detached mode, exposing port 2605 of the container to port ```2605``` on your localhost `127.0.0.1`.
 
-### Using TLS Version in Docker
+### Using TLS Version in `Docker`
 
 Build special Docker image, which will generate certificates
 
@@ -39,12 +39,22 @@ Once the image is built, you can run the database as a Docker container with the
 docker run -d -p "127.0.0.1:2605:2605" -e DARE_HOST="0.0.0.0" -e DARE_PORT=2605 -e DARE_TLS_ENABLED="True" -e DARE_CERT_PRIVATE="/app/settings/cert_private.pem" -e DARE_CERT_PUBLIC="/app/settings/cert_public.pem" dare-db-tls
 ```
 
-Access API over HTTPS on https://localhost:2605
+Access API over HTTPS on https://127.0.0.1:2605
 
 
-## How to Use
+## How to Use: Core API Overview
 
-The in-memory database provides three simple HTTP endpoints to interact with stored data:
+The in-memory database provides three simple HTTP endpoints to interact with stored data. By default endpoints are protected by JWT:
+
+### POST /login
+
+Get the JWT token. For credentials check file: `config.toml`:
+```
+curl --insecure -X POST -u ADMIN:PASSWORD https://127.0.0.1:2605/login
+```
+
+* `--insecure` is a workaround to overcome issues for `TLS` version working with self-signed certificates
+* `-H "Authorization: <TOKEN>` is how thw JWT must be passed by, note there is no `Bearer` in the header
 
 ### GET /get/{key}
 
@@ -53,7 +63,7 @@ This endpoint retrieves an item from the hashtable using a specific key.
 Example usage with cURL:
 
 ```bash
-curl -X GET http://localhost:2605/get/myKey
+curl -X GET -H "Authorization: <TOKEN>" http://127.0.0.1:2605/get/myKey
 ```
 
 ### SET /set
@@ -63,7 +73,7 @@ This endpoint inserts a new item into the hashtable. The request body should con
 Example usage with cURL:
 
 ```bash
-curl -X POST -d '{"myKey":"myValue"}' http://localhost:2605/set
+curl -X POST -H "Authorization: <TOKEN>" -d '{"myKey":"myValue"}' http://127.0.0.1:2605/set
 ```
 
 ### DELETE /delete/{key}
@@ -73,54 +83,21 @@ This endpoint deletes an item from the hashtable using a specific key.
 Example usage with cURL:
 
 ```bash
-curl -X DELETE http://localhost:2605/delete/myKey
+curl -X DELETE -H "Authorization: <TOKEN>" http://127.0.0.1:2605/delete/myKey
 ```
 
+## How to Use: Examples
 
-## Example Usage
+A number of examples to demonstrate, how to use the database in a Go application:
 
-Below is a simple example of how to use this database in a Go application:
+* [daredb_basic.go](examples/go/daredb_basic.go)
+* [daredb_jwt_basic.go](examples/go/daredb_jwt_basic.go)
 
-```go
-package main
+A number of examples to demonstrate, how to use the database in a Python application:
 
-import (
-    "fmt"
-    "net/http"
-    "bytes"
-)
+* [daredb_jwt_collection.py](examples/python/daredb_jwt_collection.py)
 
-func main() {
-    // Example of inserting a new item
-    _, err := http.Post("http://localhost:2605/set", "application/json", bytes.NewBuffer([]byte(`{"myKey":"myValue"}`)))
-    if err != nil {
-        fmt.Println("Error while inserting item:", err)
-        return
-    }
-
-    // Example of retrieving an item
-    resp, err := http.Get("http://localhost:2605/get/myKey")
-    if err != nil {
-        fmt.Println("Error while retrieving item:", err)
-        return
-    }
-    defer resp.Body.Close()
-
-    // Example of deleting an item
-    req, err := http.NewRequest("DELETE", "http://localhost:2605/delete/myKey", nil)
-    if err != nil {
-        fmt.Println("Error while deleting item:", err)
-        return
-    }
-    _, err = http.DefaultClient.Do(req)
-    if err != nil {
-        fmt.Println("Error while deleting item:", err)
-        return
-    }
-}
-```
-
-## OpenAPI Spec
+## OpenAPI 3.0 Specification
 
 For latest OpenAPI spec see: [openapi](openapi)
 
@@ -131,6 +108,8 @@ All sorts of contributions to this project!  Here's how you can get involved:
 <details>
 
 <summary>How to Contribute: Overview </summary>
+
+#### How to Contribute: Steps
 
 * *Found a bug?* Let us know! Open an [issue](https://github.com/dmarro89/dare-db/issues) and briefly describe the problem.
 * *Have a great idea for a new feature?* Open an [issue](https://github.com/dmarro89/dare-db/issues) to discuss it. If you'd like to implementing it yourself, you can assign this issue to yourself and create a pull request once the code/improvement/fix is ready.
@@ -171,7 +150,7 @@ Here is how you could add your new ```code/improvement/fix``` with a *pull reque
 
 <summary>How to Contribute: Dependencies</summary>
 
-## How to Contribute: Dependencies
+#### How to Contribute: Dependencies
 
 * [task (a.k.a.: `taskfile`)](https://github.com/go-task/task)
 	+ Install as Go module (globally)
