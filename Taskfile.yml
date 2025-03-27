@@ -36,6 +36,7 @@ tasks:
       - wgo -xdir data go run main.go
       
   test:
+    desc: runs all tests
     aliases: [t]
     cmds:
       - go test ./... -v

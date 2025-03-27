@@ -62,7 +62,7 @@ func (a *CasbinAuth) HasPermission(userID, action, asset string) bool {
 		}
 	}
 
-	a.logger.Info(fmt.Sprintf("User %s is not allowed to %s resource %s", userID, action, asset))
+	a.logger.Info(fmt.Sprintf("User '%s' is not allowed to '%s' resource '%s'", userID, action, asset))
 	return false
 }
 

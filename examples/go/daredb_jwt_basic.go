@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -37,13 +38,14 @@ func loadConfig() (*Config, error) {
 
 func NewDareDBPyClientBase(username, password, baseURL string) *DareDBPyClientBase {
 	client := &DareDBPyClientBase{
-		Username:   username,
-		Password:   password,
-		BaseURL:    baseURL,
+		Username: username,
+		Password: password,
+		BaseURL:  baseURL,
 		HTTPClient: &http.Client{Transport: &http.Transport{
-			// InsecureSkipVerify: true, // Be cautious using this in production
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // Be cautious using this in production
 		}},
 	}
+
 	client.AuthURL = client.BaseURL + "/login"
 	client.JWTToken = client.getJWTToken()
 	log.Printf("JWT token: %s", client.JWTToken)
