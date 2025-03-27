@@ -42,9 +42,9 @@ func (middleware *DareMiddleware) HandleFunc(next http.HandlerFunc) http.Handler
 
 		asset := middleware.extractAssetFromPath(r.URL.Path)
 
-		middleware.logger.Info(fmt.Sprintf("User %s is requesting %s resource %s", username, r.Method, asset))
+		middleware.logger.Info(fmt.Sprintf("User '%s' is requesting '%s' resource '%s'", username, r.Method, asset))
 		if !middleware.authorizer.HasPermission(username, r.Method, asset) {
-			middleware.logger.Info(fmt.Sprintf("User %s is not allowed to %s resource %s", username, r.Method, asset))
+			middleware.logger.Info(fmt.Sprintf("User '%s' is not allowed to '%s' resource '%s'", username, r.Method, asset))
 			http.Error(w, "Forbidden: you do not have permission to access this resource", http.StatusForbidden)
 			return
 		}
