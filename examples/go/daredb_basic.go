@@ -11,7 +11,7 @@ import (
 const DAREDB_BASE_URL = "http://127.0.0.1:2605"
 
 // Example JWT token (replace with a real token)
-const JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiZXhwIjoxNzQzMDkwNDcyfQ.5fy6k3IBlcIT1u7OcurSeKOBeZ8HgnsWdMMcDJS9hyE"
+const JWT_TOKEN = "YOUR-JWT-TOKEN-HERE"
 
 func addKeyWithPost() {
 	log.Println("Making POST request to a database")
