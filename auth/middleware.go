@@ -38,6 +38,7 @@ func (middleware *DareMiddleware) HandleFunc(next http.HandlerFunc) http.Handler
 		if err != nil {
 			middleware.logger.Error(fmt.Sprintf("Invalid authorization token: %v", err))
 			http.Error(w, "Unauthorized: invalid authorization token", http.StatusUnauthorized)
+			return
 		}
 
 		asset := middleware.extractAssetFromPath(r.URL.Path)

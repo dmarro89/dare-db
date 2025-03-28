@@ -81,6 +81,7 @@ func (store *UserStore) DeleteToken(username string) error {
 	}
 
 	delete(store.tokens, username)
+
 	return nil
 }
 

@@ -347,8 +347,10 @@ func (srv *DareServer) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(map[string]string{
 		"token": token,
 	})
+
 	if err != nil {
 		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
+		return
 	}
 }
 
