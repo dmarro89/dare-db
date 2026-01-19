@@ -5,7 +5,7 @@ go 1.23.4
 require (
 	github.com/dmarro89/go-redis-hashtable v0.0.7
 	github.com/golang-jwt/jwt/v5 v5.3.0
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	gotest.tools v2.2.0+incompatible
